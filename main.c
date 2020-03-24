@@ -24,6 +24,7 @@ int	offset;
 int	screen_height;
 int	screen_width;
 int	x;
+int	fwd;
 
 }                 data_t;
 
@@ -189,6 +190,7 @@ data.x = 0;
 	verline(&data, data.x, drawStart, drawEnd, color);
 	data.x++;
    }
+
 mlx_put_image_to_window(data.mlx_ptr, data.mlx_win, data.img, 0, 0);
 
     mlx_loop(data.mlx_ptr);
