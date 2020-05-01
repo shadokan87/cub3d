@@ -5,6 +5,8 @@
 #include <math.h>
 #include <unistd.h>
 
+#define rotSpeed 0.02
+#define moveSpeed 0.1
 #define mapWidth 24
 #define mapHeight 24
 
@@ -42,15 +44,6 @@ void	ft_putnbr(int nb)
 	ft_putchar(nb % 10 + '0');
 }
 
-typedef struct    data_s
-{
-    void	*mlx_ptr;
-    void	*mlx_win;
-    int		s_w;
-    int		s_h;
-    
-}                 data_t;
-
 typedef struct var_s
 {
 	double posX;
@@ -84,6 +77,8 @@ typedef struct var_s
 	int		A;
 	int		S;
 	int		D;
+	int		L_R;
+	int		R_R;
 	void	*img;
 	int	endian;
 	int	bpp;
@@ -93,6 +88,12 @@ typedef struct var_s
 	int	s_h;
 	int	s_w;
 	char	*addr;
+	void	*mlx_ptr;
+    void	*mlx_win;
+	int **map;
+	int	o_drawStart;
+	int o_drawEnd;
+	int o_x;
 }	var_t;
 
 void	pixel_put(var_t *var, int x, int y, int color)
@@ -127,11 +128,11 @@ int	verline(var_t *var, int x, int draw_start, int draw_end, int color)
 	return (1);
 }
 
-void	init_raycast(data_t *data, var_t *var)
+void	init_raycast(var_t *var)
 {
-	var->s_w = data->s_w;
-	var->s_h = data->s_h;
-	var->img = mlx_new_image(data->mlx_ptr, data->s_w, data->s_h);
+	var->s_w = var->s_w;
+	var->s_h = var->s_h;
+	var->img = mlx_new_image(var->mlx_ptr, var->s_w, var->s_h);
 	var->addr = mlx_get_data_addr(var->img, &var->bpp, &var->line, &var->endian);
 	var->posX = 22;
 	var->posY = 12;
@@ -167,7 +168,7 @@ void	step(var_t *var)
 	}
 }
 
-void	hit(int worldMap[mapWidth][mapHeight], var_t *var)
+void	hit(var_t *var)
 {
 	while (var->hit == 0)
 	{
@@ -183,7 +184,7 @@ void	hit(int worldMap[mapWidth][mapHeight], var_t *var)
 			var->mapY += var->stepY;
 			var->side = 1;
 		}
-		if (worldMap[var->mapX][var->mapY] > 0)
+		if (var->map[var->mapX][var->mapY] > 0)
 			var->hit = 1;
 	}
 	if (var->side == 0)
@@ -193,28 +194,40 @@ void	hit(int worldMap[mapWidth][mapHeight], var_t *var)
 		var->perpWallDist = (var->mapY - var->posY + (1 - var->stepY) / 2) / var->rayDirY;	
 }
 
-void	draw(var_t *var, data_t *data, var_info_t *var)
+void	cls(var_t *var)
 {
-	var->lineHeight = (int)(data->s_h / var->perpWallDist);
-	var->drawStart = -var->lineHeight / 2 + data->s_h / 2;
+	int x = 0;
+	while (x < var->s_w)
+	{
+		verline(var, x, 0, var->s_h, 0);
+		x++;
+	}
+}
+
+void	draw(var_t *var)
+{
+	var->lineHeight = (int)(var->s_h / var->perpWallDist);
+	var->drawStart = -var->lineHeight / 2 + var->s_h / 2;
 	if (var->drawStart < 0)
 		var->drawStart = 0;
-	var->drawEnd = var->lineHeight / 2 + data->s_h / 2;
-	if (var->drawEnd >= data->s_h)
-		var->drawEnd = data->s_h - 1;
+	var->drawEnd = var->lineHeight / 2 + var->s_h / 2;
+	if (var->drawEnd >= var->s_h)
+		var->drawEnd = var->s_h - 1;
 	var->color = 255;
 	if (var->side == 1)
 		var->color = var->color / 2;
 	verline(var, var->x, var->drawStart, var->drawEnd, var->color);
 }
 
-void	raycast(var_info_t *var, data_t *data, var_t *var,
-int worldMap[mapWidth][mapHeight])
+void	raycast(var_t *var)
 {
 	var->x = 0;
-	while (var->x < data->s_w)
+	if (var->S || var->W || var->D || var->A
+	|| var->R_R || var->L_R)
+		cls(var);
+	while (var->x < var->s_w)
 	{
-		var->cameraX = 2 * var->x / (double)data->s_w - 1;
+		var->cameraX = 2 * var->x / (double)var->s_w - 1;
 		var->rayDirX = var->dirX + var->planeX * var->cameraX;
 		var->rayDirY = var->dirY + var->planeY * var->cameraX;
 		var->mapX = (int)var->posX;
@@ -223,8 +236,8 @@ int worldMap[mapWidth][mapHeight])
 		var->deltaDistY = fabs(1 / var->rayDirY);
 		var->hit = 0;
 		step(var);
-		hit(worldMap, var);
-		draw(var, data, var);
+		hit(var);
+		draw(var);
 		var->x++;
 	}
 }
@@ -278,6 +291,18 @@ int		key_pressed(int keycode, var_t *var)
 		ft_putstr("\nD = ");
 		ft_putnbr(var->D);
 	}
+	else if (keycode == 123)
+	{
+		var->L_R = 1;
+		ft_putstr("\nL_R = ");
+		ft_putnbr(var->L_R);
+	}
+	else if (keycode == 124)
+	{
+		var->R_R = 1;
+		ft_putstr("\nR_R = ");
+		ft_putnbr(var->R_R);
+	}
 	return (0);	
 }
 
@@ -317,8 +342,152 @@ int		key_released(int keycode, var_t *var)
 		ft_putstr("\nD = ");
 		ft_putnbr(var->D);
 	}
+	else if (keycode == 123)
+	{
+		var->L_R = 0;
+		ft_putstr("\nL_R = ");
+		ft_putnbr(var->L_R);
+	}
+	else if (keycode == 124)
+	{
+		var->R_R = 0;
+		ft_putstr("\nR_R = ");
+		ft_putnbr(var->R_R);
+	}
 	return (0);
 }
+
+int	move_is_possible(int pos)
+{
+	if (pos == 1 || pos == 4)
+		return (0);
+	return (1);
+}
+
+void	fwd_bckwrd(var_t *var)
+{
+// if (var->W)
+//     {
+// 		if (move_is_possible(var->map[(int)(var->posX + var->dirX * moveSpeed)]
+//                          [(int)(var->posX)]))
+//                          var->posX += var->dirX * moveSpeed * 0.5;
+//     }
+if (var->W)
+    {
+      if(var->map[(int)(var->posX + var->dirX * moveSpeed)][(int)(var->posY)] == 0) 
+	  	var->posX += var->dirX * moveSpeed * 0.5;
+      if(var->map[(int)(var->posX)][(int)(var->posY + var->dirY * moveSpeed)] == 0)
+	  	var->posY += var->dirY * moveSpeed * 0.5;
+    }
+	if (var->S)
+	{
+		if (var->map[(int)(var->posX - var->dirX * moveSpeed)]
+                         [(int)(var->posY)] == 0)
+                         var->posX -= var->dirX * moveSpeed * 0.5;
+		if (var->map[(int)(var->posX)][(int)(var->posY - var->dirY * moveSpeed)] == 0)
+			var->posY -= var->dirY * moveSpeed * 0.5;
+	}
+}
+
+void	x_y(var_t *var)
+{
+if (var->A)
+	{
+		if (var->map[(int)(var->posX)][(int)(var->posY + var->dirX * moveSpeed)] == 0)
+			var->posY += var->dirX * moveSpeed * 0.5;
+		if (var->map[(int)(var->posX - var->dirY * moveSpeed)][(int)(var->posY)] == 0)
+			var->posX -= var->dirY * moveSpeed * 0.5;
+	}
+	if (var->D)
+	{
+		if (var->map[(int)(var->posX)][(int)(var->posY - var->dirX * moveSpeed)] == 0)
+			var->posY -= var->dirX * moveSpeed * 0.5;
+		if (var->map[(int)(var->posX + var->dirY * moveSpeed)][(int)(var->posY)] == 0)
+			var->posX += var->dirY * moveSpeed * 0.5;
+	}
+}
+
+void	l_r(var_t *var)
+{
+	double old_dir;
+	double old_plane;
+	double rot_speed;
+
+	old_dir = var->dirX;
+	old_plane = var->planeX;
+	rot_speed = 0.1;
+	if (var->R_R)
+	{
+		var->dirX = (var->dirX * cos(-rotSpeed)) - var->dirY * sin(-rotSpeed);
+		var->dirY = (old_dir * sin(-rotSpeed) + var->dirY * cos(-rotSpeed));
+		var->planeX = (var->planeX * cos(-rotSpeed) - var->planeY * sin(-rotSpeed));
+     	var->planeY = (old_plane * sin(-rotSpeed) + var->planeY * cos(rotSpeed));
+	}
+	if (var->L_R)
+	{
+		var->dirX = (var->dirX * cos(rotSpeed)) - var->dirY * sin(rotSpeed);
+		var->dirY = (old_dir * sin(rotSpeed) + var->dirY * cos(rotSpeed));
+		var->planeX = (var->planeX * cos(rotSpeed) - var->planeY * sin(rotSpeed));
+     	var->planeY = (old_plane * sin(rotSpeed) + var->planeY * cos(rotSpeed));
+	}
+}
+
+int	movement(var_t *var)
+{
+	fwd_bckwrd(var);
+	x_y(var);
+	l_r(var);
+}
+
+int	listen_keys(var_t *var)
+{
+	mlx_hook(var->mlx_win, 2, 2, key_pressed, (void *)var);
+	mlx_key_hook(var->mlx_win, key_released, (void *)var);
+	movement(var);
+}
+
+int	**duplicate_map(int worldMap[mapWidth][mapHeight])
+{
+	int **map;
+	int i;
+	int y;
+	
+	i = 0;
+	y = 0;
+	map = malloc(sizeof(int *) * 24);
+	while (i < 24)
+  {
+    map[i] = malloc(sizeof(int) * 24);
+    i++;
+  }
+  i = 0;
+  while (y < 24)
+  {
+    while (i < 24)
+  {
+    map[y][i] = worldMap[y][i];
+    i++;
+  }
+  i = 0;
+  y++;
+  } 
+	return (map);
+}
+
+int		run(var_t *var)
+{
+	listen_keys(var);
+	raycast(var);
+	mlx_put_image_to_window(var->mlx_ptr, var->mlx_win, var->img, 0, 0);
+}
+
+int		start(var_t *var)
+{
+	mlx_loop_hook(var->mlx_ptr, run, (void *)var);
+	mlx_loop(var->mlx_ptr);
+}
+
+
 
 int	main(void)
 {
@@ -334,9 +503,9 @@ int	main(void)
   {1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,2,2,0,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -349,22 +518,18 @@ int	main(void)
   {1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 };
-	data_t data;
 	var_t var;
 
-	data.s_w = 640;
-	data.s_h = 480;
-	if ((data.mlx_ptr = mlx_init()) == NULL)
+	var.s_w = 640;
+	var.s_h = 480;
+	if ((var.mlx_ptr = mlx_init()) == NULL)
 		return (EXIT_FAILURE);
-	if ((data.mlx_win = mlx_new_window(data.mlx_ptr, data.s_w, data.s_h, "cub3d")) == NULL)
+	if ((var.mlx_win = mlx_new_window(var.mlx_ptr, var.s_w, var.s_h, "cub3d")) == NULL)
 	return (EXIT_FAILURE);
-	init_raycast(&var, &data, &var);
-	raycast(&var, &data, &var, worldMap);
-	mlx_put_image_to_window(data.mlx_ptr, data.mlx_win, var.img, 0, 0);
+	var.map = duplicate_map(worldMap);
+	init_raycast(&var);
 	init_keys(&var, 5);
-	mlx_hook(data.mlx_win, 2, 2, key_pressed, &var);
-	mlx_key_hook(data.mlx_win, key_released, &var);
-	mlx_loop(data.mlx_ptr);
+	start(&var);
 	return (EXIT_SUCCESS);
 }
 
