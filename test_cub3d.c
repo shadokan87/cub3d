@@ -1,6 +1,11 @@
-#include <stdlib.h>
+
 #include <stdio.h>
 #include <string.h>
+
+#include <unistd.h>
+#include <stdlib.h>
+#include "gnl_working/get_next_line.h"
+#include "libft/libft.h"
 #include <mlx.h>
 #include <math.h>
 #include <unistd.h>
@@ -101,6 +106,13 @@ typedef struct var_s
 	int	x;
 	int	s_h;
 	int	s_w;
+	//
+	char **text_paths;
+    char *paramFile;
+    int F_color[3];
+    int C_color[3];
+    char **ParamSliced;
+	//
 	char	*addr;
 	void	*mlx_ptr;
     void	*mlx_win;
@@ -109,6 +121,74 @@ typedef struct var_s
 	int o_drawEnd;
 	int o_x;
 }	var_t;
+
+void    getParamFile(int fd, char **line, var_t *var)
+{
+    int ret;
+
+    ret = 0;
+    while ((ret = get_next_line(fd, line)) > 0)
+       var->paramFile = ft_strjoin(var->paramFile ? var->paramFile : "", *line);
+}
+
+int  ft_strcmp(char *str, char *str2)
+{
+    int i;
+
+    i = 0;
+    if (ft_strlen(str) != ft_strlen(str2))
+        return (0);
+    while (str[i])
+    {
+        if (str[i] == str2[i])
+            i++;
+        else
+            return (0);
+    }
+    return (1);
+}
+
+void    fill_color(var_t *var, int i)
+{
+    if (ft_strcmp(var->ParamSliced[i], "F"))
+    {
+        var->F_color[0] = ft_atoi(ft_split(var->ParamSliced[i + 1], ',')[0]);
+        var->F_color[1] = ft_atoi(ft_split(var->ParamSliced[i + 1], ',')[1]);
+        var->F_color[2] = ft_atoi(ft_split(var->ParamSliced[i + 1], ',')[2]);
+        return ;         
+    }
+    var->C_color[0] = ft_atoi(ft_split(var->ParamSliced[i + 1], ',')[0]);
+    var->C_color[1] = ft_atoi(ft_split(var->ParamSliced[i + 1], ',')[1]);
+    var->C_color[2] = ft_atoi(ft_split(var->ParamSliced[i + 1], ',')[2]);
+}
+
+void   fillLoopParams(var_t *var)
+{
+    int i;
+
+    i = 0;
+    while (var->ParamSliced[i] != NULL)
+    {
+        if (ft_strcmp(var->ParamSliced[i], "R"))
+        {
+            var->s_w = ft_atoi(var->ParamSliced[i + 1]);
+            var->s_h = ft_atoi(var->ParamSliced[i + 2]);
+        }
+        if (ft_strcmp(var->ParamSliced[i], "NO"))
+            var->text_paths[2] = ft_strdup(var->ParamSliced[i + 1]);
+        if (ft_strcmp(var->ParamSliced[i], "SO"))
+            var->text_paths[3] = ft_strdup(var->ParamSliced[i + 1]);
+        if (ft_strcmp(var->ParamSliced[i], "WE"))
+            var->text_paths[4] = ft_strdup(var->ParamSliced[i + 1]);
+        if (ft_strcmp(var->ParamSliced[i], "EA"))
+            var->text_paths[5] = ft_strdup(var->ParamSliced[i + 1]);
+        if (ft_strcmp(var->ParamSliced[i], "S"))
+            var->text_paths[6] = ft_strdup(var->ParamSliced[i + 1]);
+        if (ft_strcmp(var->ParamSliced[i], "F") || ft_strcmp(var->ParamSliced[i], "C"))
+            fill_color(var, i);
+        i++;
+    }
+} 
 
 void	pixel_put(var_t *var, int x, int y, int color)
 {
@@ -572,9 +652,33 @@ int		start(var_t *var)
 	mlx_loop(var->mlx_ptr);
 }
 
+void	init_struct(var_t *var, char **argv)
+{
+	int fd;
+    char *line;
+    int i = 0;
+    int y = 0;
 
+    var->paramFile = NULL;
+	var->ParamSliced = NULL;
+    fd = open(argv[1], O_RDONLY);
+    getParamFile(fd, &line,var);
+    i = 0;
+    while (var->paramFile[i])
+    {
+        if (var->paramFile[i] == '\n')
+            var->paramFile[i] = ' ';
+        i++;
+    }
+    i = 0;
+    var->ParamSliced = ft_split(var->paramFile, ' ');
+    if (!(var->text_paths = malloc(sizeof(char *) * 8)))
+        return ;
+	ft_putstr("a");
+	fillLoopParams(var);
+}
 
-int	main(void)
+int	main(int argc, char **argv)
 {
 	int worldMap[mapWidth][mapHeight]=
 {
@@ -605,8 +709,7 @@ int	main(void)
 };
 	var_t var;
 
-	var.s_w = 640;
-	var.s_h = 480;
+	init_struct(&var, argv);
 	if ((var.mlx_ptr = mlx_init()) == NULL)
 		return (EXIT_FAILURE);
 	if ((var.mlx_win = mlx_new_window(var.mlx_ptr, var.s_w, var.s_h, "cub3d")) == NULL)
@@ -617,4 +720,3 @@ int	main(void)
 	start(&var);
 	return (EXIT_SUCCESS);
 }
-
