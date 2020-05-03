@@ -1,5 +1,6 @@
 typedef struct var_s
 {
+	//var
 	double posX;
 	double posY;
 	double dirX;
@@ -16,15 +17,25 @@ typedef struct var_s
 	double deltaDistX;
 	double deltaDistY;
 	double perpWallDist;
+	float step;
 	int mapX;
 	int mapY;
 	int stepX;
 	int stepY;
 	int hit;
+	int wallx;
+	int tex_y;
+	int texpos;
+	int tex_x;
+	int tex_h;
+	int tex_w;
+	void *t_img;
+	int *t_addr;
 	int side;
 	int lineHeight;
 	int drawStart;
 	int drawEnd;
+	int *img_data;
 	int color;
 	int		ESC;
 	int		W;
@@ -34,6 +45,9 @@ typedef struct var_s
 	int		L_R;
 	int		R_R;
 	void	*img;
+	int t_endian;
+	int t_bpp;
+	int t_line;
 	int	endian;
 	int	bpp;
 	int	line;
@@ -48,5 +62,4 @@ typedef struct var_s
 	int	o_drawStart;
 	int o_drawEnd;
 	int o_x;
-	int wallx;
 }	var_t;
