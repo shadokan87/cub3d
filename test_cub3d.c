@@ -108,10 +108,13 @@ typedef struct var_s
 	int	s_w;
 	//
 	char **text_paths;
+	int **loaded_text;
+	int **loaded_addr;
     char *paramFile;
     int F_color[3];
     int C_color[3];
     char **ParamSliced;
+	
 	//
 	char	*addr;
 	void	*mlx_ptr;
@@ -186,6 +189,8 @@ void   fillLoopParams(var_t *var)
             var->text_paths[6] = ft_strdup(var->ParamSliced[i + 1]);
         if (ft_strcmp(var->ParamSliced[i], "F") || ft_strcmp(var->ParamSliced[i], "C"))
             fill_color(var, i);
+		else if (i <= 8 &&i != 7)
+			var->text_paths[i] = NULL;
         i++;
     }
 } 
@@ -346,10 +351,10 @@ void	draw_texture(var_t *var)
 		texy = (int)texpos;
 		texpos += step;
 		//*(unsigned int*)dst = color;
-		pixel_put(var, var->x, var->drawStart, var->t_addr[64 * texy + texx]);
+		pixel_put(var, var->x, var->drawStart, var->loaded_addr[var->hit][64 * texy + texx]);
 		var->drawStart++;
 	}
-	
+
 }
 
 void	draw(var_t *var)
@@ -628,6 +633,29 @@ int	**duplicate_map(int worldMap[mapWidth][mapHeight])
 	return (map);
 }
 
+int	load_text(var_t *var)
+{
+	int i;
+	int t_endian;
+	int t_bpp;
+	int t_line;
+
+	i = 2;
+	if (!(var->loaded_text = malloc(sizeof(int *) * 9)))
+		return (0);
+	if (!(var->loaded_addr = malloc(sizeof(int *) * 9)))
+		return (0);
+	while (i <= 7)
+	{
+		if (var->text_paths[i])
+		{
+			var->loaded_text[i] = mlx_xpm_file_to_image(var->mlx_ptr, var->text_paths[i], &var->tex_w, &var->tex_h);
+			var->loaded_addr[i] = (int *)mlx_get_data_addr(var->loaded_text[2], &t_bpp, &t_line, &t_endian);
+		}
+		i++;
+	}
+}
+
 int		run(var_t *var)
 {
 	int t_endian;
@@ -636,9 +664,10 @@ int		run(var_t *var)
 
 	var->tex_h = 64;
 	var->tex_w = 64;
-	
-	// var->t_img = mlx_xpm_file_to_image(var->mlx_ptr, "bluestone.xpm", &var->tex_w, &var->tex_h);
-	// var->t_addr = (int *)mlx_get_data_addr(var->t_img, &t_bpp, &t_line, &t_endian);
+	var->text_paths[7] = "text";
+	//var->t_img = mlx_xpm_file_to_image(var->mlx_ptr, "bluestone.xpm", &var->tex_w, &var->tex_h);
+	load_text(var);
+	//var->t_addr = (int *)mlx_get_data_addr(var->loaded_text[2], &t_bpp, &t_line, &t_endian);
 	var->img_data = (int *)mlx_get_data_addr(var->img, &var->t_bpp, &var->t_line, &var->t_endian);
 	listen_keys(var);
 	raycast(var);
@@ -672,7 +701,7 @@ void	init_struct(var_t *var, char **argv)
     }
     i = 0;
     var->ParamSliced = ft_split(var->paramFile, ' ');
-    if (!(var->text_paths = malloc(sizeof(char *) * 8)))
+    if (!(var->text_paths = malloc(sizeof(char *) * 9)))
         return ;
 	ft_putstr("a");
 	fillLoopParams(var);
