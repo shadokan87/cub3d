@@ -637,8 +637,8 @@ int		run(var_t *var)
 	var->tex_h = 64;
 	var->tex_w = 64;
 	
-	var->t_img = mlx_xpm_file_to_image(var->mlx_ptr, "bluestone.xpm", &var->tex_w, &var->tex_h);
-	var->t_addr = (int *)mlx_get_data_addr(var->t_img, &t_bpp, &t_line, &t_endian);
+	// var->t_img = mlx_xpm_file_to_image(var->mlx_ptr, "bluestone.xpm", &var->tex_w, &var->tex_h);
+	// var->t_addr = (int *)mlx_get_data_addr(var->t_img, &t_bpp, &t_line, &t_endian);
 	var->img_data = (int *)mlx_get_data_addr(var->img, &var->t_bpp, &var->t_line, &var->t_endian);
 	listen_keys(var);
 	raycast(var);
@@ -676,6 +676,7 @@ void	init_struct(var_t *var, char **argv)
         return ;
 	ft_putstr("a");
 	fillLoopParams(var);
+	ft_putstr(var->text_paths[2]);
 }
 
 int	main(int argc, char **argv)

@@ -5,14 +5,12 @@
 #include "libft/libft.h"
 
 typedef struct var_s
-{
+{ int s_h;
+    int s_w;
     char **text_paths;
     char *paramFile;
-    int s_h;
-    int s_w;
     int F_color[3];
     int C_color[3];
-
     char **ParamSliced;
 }   var_t;
 
