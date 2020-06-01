@@ -125,6 +125,16 @@ typedef struct var_s
 	int o_x;
 }	var_t;
 
+int		rgb_int(int red, int green, int blue)
+{
+	int	rgb;
+
+	rgb = red;
+	rgb = (rgb << 8) + green;
+	rgb = (rgb << 8) + blue;
+	return (rgb);
+}
+
 void    getParamFile(int fd, char **line, var_t *var)
 {
     int ret;
@@ -344,7 +354,6 @@ void	draw_texture(var_t *var)
 	texpos = (var->drawStart - var->s_h / 2 + var->lineHeight / 2) * step;
 	char *dst;
 	int color;
-
 	while (var->drawStart < var->drawEnd)
 	{
 		dst = var->addr + (var->drawStart * var->line + var->x * (var->bpp / 8));
@@ -364,14 +373,8 @@ void	draw(var_t *var)
 	if (var->side == 1)
 		var->color = var->color / 2;
 		verline(var, var->x, var->drawStart, var->drawEnd, var->color);
-	// while (var->drawStart < var->drawEnd)
-	// {
-	// 	var->tex_y = (int)var->texpos;
-	// 	var->texpos += var->step;
-	// 	var->img_data[var->drawStart++ * var->s_w + (int)var->x] = 
-	// 	var->t_addr[var->tex_w * var->tex_y + var->tex_x];
-	// }
 }
+
 
 void	raycast(var_t *var)
 {
@@ -392,10 +395,13 @@ void	raycast(var_t *var)
 		var->hit = 0;
 		step(var);
 		hit(var);
-		if (var->hit != 2)
+		verline(var, var->x, 0, var->s_h / 2, rgb_int(var->C_color[0], var->C_color[1], var->C_color[2]));
+		verline(var, var->x, var->s_h / 2, var->s_h, rgb_int(var->F_color[0], var->F_color[1], var->F_color[2]));
+		if (var->hit == 1)
 			draw(var);
-		if (var->hit == 2)
+		if (var->hit > 1)
 			draw_texture(var);
+		
 		var->x++;
 	}
 	
@@ -645,12 +651,12 @@ int	load_text(var_t *var)
 		return (0);
 	if (!(var->loaded_addr = malloc(sizeof(int *) * 9)))
 		return (0);
-	while (i <= 7)
+	while (i <= 6)
 	{
 		if (var->text_paths[i])
 		{
 			var->loaded_text[i] = mlx_xpm_file_to_image(var->mlx_ptr, var->text_paths[i], &var->tex_w, &var->tex_h);
-			var->loaded_addr[i] = (int *)mlx_get_data_addr(var->loaded_text[2], &t_bpp, &t_line, &t_endian);
+			var->loaded_addr[i] = (int *)mlx_get_data_addr(var->loaded_text[i], &t_bpp, &t_line, &t_endian);
 		}
 		i++;
 	}
@@ -664,19 +670,16 @@ int		run(var_t *var)
 
 	var->tex_h = 64;
 	var->tex_w = 64;
-	var->text_paths[7] = "text";
-	//var->t_img = mlx_xpm_file_to_image(var->mlx_ptr, "bluestone.xpm", &var->tex_w, &var->tex_h);
-	load_text(var);
-	//var->t_addr = (int *)mlx_get_data_addr(var->loaded_text[2], &t_bpp, &t_line, &t_endian);
+	var->text_paths[7] = "test";
 	var->img_data = (int *)mlx_get_data_addr(var->img, &var->t_bpp, &var->t_line, &var->t_endian);
 	listen_keys(var);
 	raycast(var);
 	mlx_put_image_to_window(var->mlx_ptr, var->mlx_win, var->img, 0, 0);
-	//mlx_put_image_to_window(var->mlx_ptr, var->mlx_win, var->t_img, 0, 0);
 }
 
 int		start(var_t *var)
 {
+	load_text(var);
 	mlx_loop_hook(var->mlx_ptr, run, (void *)var);
 	mlx_loop(var->mlx_ptr);
 }
@@ -691,7 +694,7 @@ void	init_struct(var_t *var, char **argv)
     var->paramFile = NULL;
 	var->ParamSliced = NULL;
     fd = open(argv[1], O_RDONLY);
-    getParamFile(fd, &line,var);
+    getParamFile(fd, &line, var);
     i = 0;
     while (var->paramFile[i])
     {
@@ -703,9 +706,7 @@ void	init_struct(var_t *var, char **argv)
     var->ParamSliced = ft_split(var->paramFile, ' ');
     if (!(var->text_paths = malloc(sizeof(char *) * 9)))
         return ;
-	ft_putstr("a");
 	fillLoopParams(var);
-	ft_putstr(var->text_paths[2]);
 }
 
 int	main(int argc, char **argv)
@@ -722,9 +723,9 @@ int	main(int argc, char **argv)
   {1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,2,2,0,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
