@@ -116,6 +116,23 @@ typedef struct var_s
     char **ParamSliced;
 	
 	//
+
+	//
+	double spriteCamX;
+	double spriteCamY;
+	double transformX;
+	double transformY;
+	int spriteScreenX;
+	int spriteHeight;
+	int spriteWidth;
+	int drawStartY;
+	int drawStartX;
+	int drawEndY;
+	int drawEndX;
+	int stripe;
+	int spriteX;
+	int spriteY;
+	//
 	char	*addr;
 	void	*mlx_ptr;
     void	*mlx_win;
@@ -135,13 +152,40 @@ int		rgb_int(int red, int green, int blue)
 	return (rgb);
 }
 
+char *Remove_extraSpaces(char *str)
+{
+    char *return_value;
+    int i;
+    int y;
+
+    i = 0;
+    y = 0;
+    if (!(return_value = malloc(sizeof(char) * strlen(str))))
+        return (0);
+    while (str[i])
+    {
+        if (!(str[i] && str[i] == ' ' && str[i - 1] == ' '))
+       {
+        return_value[y] = str[i];
+        y++;
+       }
+       i++;
+    }
+   printf("%s", return_value);
+    return (return_value);
+}
+
 void    getParamFile(int fd, char **line, var_t *var)
 {
     int ret;
+	char *to_free;
 
     ret = 0;
     while ((ret = get_next_line(fd, line)) > 0)
        var->paramFile = ft_strjoin(var->paramFile ? var->paramFile : "", *line);
+	// to_free = var->paramFile;
+	// var->paramFile = Remove_extraSpaces(var->paramFile);
+	// free(to_free);
 }
 
 int  ft_strcmp(char *str, char *str2)
@@ -329,6 +373,61 @@ void	draw_info(var_t *var)
 		var->drawEnd = var->s_h - 1;
 }
 
+void	draw_sprite(var_t *var, int numSprites)
+{
+	
+	int texWidth = 20;
+	int texHeight = 20;
+	for (int i = 0; i < numSprites; i++)
+	{
+		double spriteX = var->spriteX - var->posX;
+		double spriteY = var->spriteY - var->posY;
+		double invDet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
+		
+		double transformX = invDet * (var->dirY * spriteX - var->dirX * spriteY);
+		double transformY = invDet * (-var->planeY * spriteX + var->planeX * spriteY);
+
+		int spriteScreenX = (int)((var->s_w / 2) * (1 + transformX / transformY));
+
+		int spriteHeight = abs((int)(var->s_h / (transformY)));
+		int drawStartY = -spriteHeight / 2 + var->s_h / 2;
+		if (drawStartY < 0)
+			drawStartY = 0;
+		int drawEndY = spriteHeight / 2 + var->s_h / 2;
+		if (drawEndY >= var->s_h)
+			drawEndY = var->s_h - 1;
+		int spriteWidth = abs((int)(var->s_h / (transformY)));
+		int drawStartX = -spriteWidth / 2 + spriteScreenX;
+		if (drawStartX < 0)
+			drawStartX = 0;
+		int drawEndX = spriteWidth / 2 + spriteScreenX;
+		if (drawEndX >= var->s_w)
+			drawEndX = var->s_w - 1;
+		
+		for(int stripe = drawStartX; stripe < drawEndX; stripe++)
+		{
+			int texX = (int)(256 * (stripe - (spriteWidth / 2 + spriteScreenX) * texWidth / spriteWidth)) / 256;
+			
+				
+				for (int y = drawStartY; y < drawEndY; y++)
+				{
+					int d = (y) * 256 - var->s_h * 128 + spriteHeight * 128;
+					int texY = ((d * texHeight) / spriteHeight) / 256;
+					//pixel_put(var, var->x, var->drawStart, var->loaded_addr[var->hit][64 * texy + texx]);
+					int color = var->loaded_addr[6][texWidth * texY * texX];
+					if ((color & 0x00FFFFFF) != 0)
+						pixel_put(var, stripe, y, color);
+					
+				}
+			
+		}
+		
+	}
+
+}
+
+
+
 void	draw_texture(var_t *var)
 {
 	draw_info(var);
@@ -338,6 +437,9 @@ void	draw_texture(var_t *var)
 	double step;
 	double texpos;
 
+
+	if (var->hit == 6)
+		return ;
 	if (var->side == 0)
 		wallx = var->posY + var->perpWallDist * var->rayDirY;
 	else
@@ -376,13 +478,11 @@ void	draw(var_t *var)
 }
 
 
+
 void	raycast(var_t *var)
 {
 	//ray
 	var->x = 0;
-	if (var->S || var->W || var->D || var->A
-	|| var->R_R || var->L_R)
-		cls(var);
 	while (var->x < var->s_w)
 	{
 		var->cameraX = 2 * var->x / (double)var->s_w - 1;
@@ -401,9 +501,10 @@ void	raycast(var_t *var)
 			draw(var);
 		if (var->hit > 1)
 			draw_texture(var);
-		
 		var->x++;
+		
 	}
+	draw_sprite(var, 1);
 	
 }
 
@@ -611,7 +712,7 @@ int	listen_keys(var_t *var)
 	movement(var);
 }
 
-int	**duplicate_map(int worldMap[mapWidth][mapHeight])
+int	**duplicate_map(int worldMap[mapWidth][mapHeight], var_t *var)
 {
 	int **map;
 	int i;
@@ -631,6 +732,11 @@ int	**duplicate_map(int worldMap[mapWidth][mapHeight])
     while (i < 24)
   {
     map[y][i] = worldMap[y][i];
+	if (map[y][i] == 6)
+	{
+		var->spriteX = i;
+		var->spriteY = y;
+	}
     i++;
   }
   i = 0;
@@ -670,9 +776,11 @@ int		run(var_t *var)
 
 	var->tex_h = 64;
 	var->tex_w = 64;
-	var->text_paths[7] = "test";
 	var->img_data = (int *)mlx_get_data_addr(var->img, &var->t_bpp, &var->t_line, &var->t_endian);
 	listen_keys(var);
+	if (var->S || var->W || var->D || var->A
+	|| var->R_R || var->L_R)
+		cls(var);
 	raycast(var);
 	mlx_put_image_to_window(var->mlx_ptr, var->mlx_win, var->img, 0, 0);
 }
@@ -728,7 +836,7 @@ int	main(int argc, char **argv)
   {1,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,1},
   {1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,4,0,0,0,0,5,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -745,7 +853,7 @@ int	main(int argc, char **argv)
 		return (EXIT_FAILURE);
 	if ((var.mlx_win = mlx_new_window(var.mlx_ptr, var.s_w, var.s_h, "cub3d")) == NULL)
 	return (EXIT_FAILURE);
-	var.map = duplicate_map(worldMap);
+	var.map = duplicate_map(worldMap, &var);
 	init_raycast(&var);
 	init_keys(&var, 5);
 	start(&var);

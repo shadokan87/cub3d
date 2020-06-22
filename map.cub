@@ -1,11 +1,11 @@
-R 1920 1080
-NO greystone.xpm
+R 1200 800
+NO    greystone.xpm
 SO bluestone.xpm
 WE bluestone.xpm
 EA bluestone.xpm
-S bluestone.xpm
-F 255, 248, 181
-C 117, 214, 255
+S barrel.xpm
+F 255,0,0
+C 117,214,255
 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 1 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
 1 0 1 1 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1
