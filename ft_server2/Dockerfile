@@ -6,4 +6,5 @@ RUN bash ~/configure_nginx.sh
 RUN bash ~/configure_php.sh
 RUN bash ~/restart_mysql.sh && bash ~/configure_mysql.sh
 RUN bash ~/install_wordpress.sh
+RUN bash ~/install_phpmyadmin.sh
 CMD bash ~/start_main_container.sh
