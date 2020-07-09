@@ -118,20 +118,25 @@ typedef struct var_s
 	//
 
 	//
-	double spriteCamX;
-	double spriteCamY;
+	int sX;
+	int y;
+	double spriteX;
+	double spriteY;
+	double sprite;
+	double s_dirX;
+	double s_dirY;
+	double invd;
 	double transformX;
 	double transformY;
 	int spriteScreenX;
-	int spriteHeight;
 	int spriteWidth;
-	int drawStartY;
+	int spriteHeight;
 	int drawStartX;
-	int drawEndY;
 	int drawEndX;
-	int stripe;
-	int spriteX;
-	int spriteY;
+	int drawStartY;
+	int drawEndY;
+	int texX;
+	int texY;
 	//
 	char	*addr;
 	void	*mlx_ptr;
@@ -375,55 +380,56 @@ void	draw_info(var_t *var)
 
 void	draw_sprite(var_t *var, int numSprites)
 {
-	
-	int texWidth = 20;
-	int texHeight = 20;
-	for (int i = 0; i < numSprites; i++)
+	int x;
+	int y;
+	double spriteX = var->spriteX - var->posX;
+	double spriteY = var->spriteY - var->posY;
+
+	double invDet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
+
+	double transformX = invDet * (var->dirY * spriteX - var->dirX * spriteY);
+	double transformY = invDet * (-var->planeY * spriteX + var->planeX * spriteY);
+
+	int spriteScreenX = (int)((var->s_w / 2 * (1 + transformX / transformY)));
+
+	int spriteHeight = abs((int)(var->s_h / (transformY)));
+
+	int drawStartY = -spriteHeight / 2 + var->s_h / 2;
+	if (drawStartY < 0)
+		drawStartY = 0;
+	int drawEndY = spriteHeight / 2 + var->s_h / 2;
+	if (drawEndY >= var->s_h)
+		drawEndY = var->s_h - 1;
+
+	int spriteWidth = abs((int)(var->s_h / (transformY)));
+	int drawStartX = -spriteWidth / 2 + spriteScreenX;
+	if (drawStartX < 0)
+		drawStartX = 0;
+	int drawEndX = spriteWidth / 2 + spriteScreenX;
+	if (drawEndX >= var->s_w)
+		drawEndX = var->s_w - 1;
+	x = drawStartX - 1;
+	int t_bpp;
+	int t_line;
+	int t_endian;
+	//var->loaded_addr[6] = (int *)mlx_get_data_addr("./barrel.XPM", &t_bpp, &t_line, &t_endian);
+	while (++x < drawEndX)
 	{
-		double spriteX = var->spriteX - var->posX;
-		double spriteY = var->spriteY - var->posY;
-		double invDet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
-		
-		double transformX = invDet * (var->dirY * spriteX - var->dirX * spriteY);
-		double transformY = invDet * (-var->planeY * spriteX + var->planeX * spriteY);
-
-		int spriteScreenX = (int)((var->s_w / 2) * (1 + transformX / transformY));
-
-		int spriteHeight = abs((int)(var->s_h / (transformY)));
-		int drawStartY = -spriteHeight / 2 + var->s_h / 2;
-		if (drawStartY < 0)
-			drawStartY = 0;
-		int drawEndY = spriteHeight / 2 + var->s_h / 2;
-		if (drawEndY >= var->s_h)
-			drawEndY = var->s_h - 1;
-		int spriteWidth = abs((int)(var->s_h / (transformY)));
-		int drawStartX = -spriteWidth / 2 + spriteScreenX;
-		if (drawStartX < 0)
-			drawStartX = 0;
-		int drawEndX = spriteWidth / 2 + spriteScreenX;
-		if (drawEndX >= var->s_w)
-			drawEndX = var->s_w - 1;
-		
-		for(int stripe = drawStartX; stripe < drawEndX; stripe++)
+		if (transformY > 0 && x > 0 && x < var->s_w)
 		{
-			int texX = (int)(256 * (stripe - (spriteWidth / 2 + spriteScreenX) * texWidth / spriteWidth)) / 256;
-			
-				
-				for (int y = drawStartY; y < drawEndY; y++)
-				{
-					int d = (y) * 256 - var->s_h * 128 + spriteHeight * 128;
-					int texY = ((d * texHeight) / spriteHeight) / 256;
-					//pixel_put(var, var->x, var->drawStart, var->loaded_addr[var->hit][64 * texy + texx]);
-					int color = var->loaded_addr[6][texWidth * texY * texX];
-					if ((color & 0x00FFFFFF) != 0)
-						pixel_put(var, stripe, y, color);
-					
-				}
-			
-		}
-		
-	}
+			y = drawStartY - 1;
+			int texX = (int)(256 * (x - (-spriteWidth / 2 + spriteScreenX)) * 64/ spriteWidth) / 256;
 
+			while(++y < drawEndY)
+			{
+				int d = (y) * 256 - var->s_h * 128 + spriteHeight * 128;
+				int texY = ((d * 40 / spriteHeight) / 256);
+				int color = var->loaded_addr[6][(texX + texY * 64) * 4];
+				if ((color & 0x00FFFFFF) != 0) pixel_put(var, x, y, color);
+			}
+		}
+	}
+	
 }
 
 
@@ -761,6 +767,8 @@ int	load_text(var_t *var)
 	{
 		if (var->text_paths[i])
 		{
+			if (i == 6)
+				ft_putstr(var->text_paths[i]);
 			var->loaded_text[i] = mlx_xpm_file_to_image(var->mlx_ptr, var->text_paths[i], &var->tex_w, &var->tex_h);
 			var->loaded_addr[i] = (int *)mlx_get_data_addr(var->loaded_text[i], &t_bpp, &t_line, &t_endian);
 		}

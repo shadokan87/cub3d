@@ -121,3 +121,36 @@ void	draw_sprite(var_t *var, int numSprites)
 		i++;
 	}
 }
+
+
+int x;
+	int y;
+	double spriteX = var->spriteX - var->posX;
+	double spriteY = var->spriteY - var->posY;
+
+	double invDet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
+
+	double transformX = invDet * (var->dirY * spriteX - var->dirX * spriteY);
+	double transformY = invDet * (-var->planeY * spriteX + var->planeX * spriteY);
+
+	int spriteScreenX = (int)((var->s_w / 2 * (1 + transformX / transformY)));
+
+	int spriteHeight = abs((int)(var->s_h / (transformY)));
+
+	int drawStartY = -spriteHeight / 2 + var->s_h / 2;
+	if (drawStartY < 0)
+		drawStartY = 0;
+	int drawEndY = spriteHeight / 2 + var->s_h / 2;
+	if (drawEndY >= var->s_h)
+		drawEndY = var->s_h - 1;
+
+	int spriteWidth = abs((int)(var->s_h / (transformY)));
+	int drawStartX = -spriteWidt / 2 + spriteScreenX;
+	if (drawStartX < 0)
+		drawStartX = 0;
+	int drawEndX = spriteWidth / 2 + spriteScreenX;
+	if (drawEndX >= var->s_w)
+		drawEndX = var->s_w - 1;
+	x = drawStartX - 1;
+	while (++x < drawEndX)
+	
