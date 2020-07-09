@@ -118,6 +118,7 @@ typedef struct var_s
 	//
 
 	//
+	double zBuffer[1200];
 	int sX;
 	int y;
 	double spriteX;
@@ -390,7 +391,7 @@ void	draw_sprite(var_t *var, int numSprites)
 	double transformX = invDet * (var->dirY * spriteX - var->dirX * spriteY);
 	double transformY = invDet * (-var->planeY * spriteX + var->planeX * spriteY);
 
-	int spriteScreenX = (int)((var->s_w / 2 * (1 + transformX / transformY)));
+	int spriteScreenX = (int)(((var->s_w / 2) * (1 + transformX / transformY)));
 
 	int spriteHeight = abs((int)(var->s_h / (transformY)));
 
@@ -415,16 +416,16 @@ void	draw_sprite(var_t *var, int numSprites)
 	//var->loaded_addr[6] = (int *)mlx_get_data_addr("./barrel.XPM", &t_bpp, &t_line, &t_endian);
 	while (++x < drawEndX)
 	{
-		if (transformY > 0 && x > 0 && x < var->s_w)
+		if (transformY > 0 && x > 0 && x < var->s_w && transformY < var->zBuffer[x])
 		{
 			y = drawStartY - 1;
-			int texX = (int)(256 * (x - (-spriteWidth / 2 + spriteScreenX)) * 64/ spriteWidth) / 256;
+			int texX = (int)(256 * (x - (-spriteWidth / 2 + spriteScreenX)) * var->tex_w/ spriteWidth) / 256;
 
 			while(++y < drawEndY)
 			{
 				int d = (y) * 256 - var->s_h * 128 + spriteHeight * 128;
-				int texY = ((d * 40 / spriteHeight) / 256);
-				int color = var->loaded_addr[6][(texX + texY * 64) * 4];
+				int texY = ((d * var->tex_h / spriteHeight) / 256);
+				int color = var->loaded_addr[6][(texX + texY * var->tex_w)];
 				if ((color & 0x00FFFFFF) != 0) pixel_put(var, x, y, color);
 			}
 		}
@@ -507,11 +508,11 @@ void	raycast(var_t *var)
 			draw(var);
 		if (var->hit > 1)
 			draw_texture(var);
+		var->zBuffer[var->x] = var->perpWallDist;
 		var->x++;
 		
 	}
 	draw_sprite(var, 1);
-	
 }
 
 void	init_keys(var_t *var, int key_number)
