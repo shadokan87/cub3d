@@ -177,7 +177,6 @@ char *Remove_extraSpaces(char *str)
        }
        i++;
     }
-   printf("%s", return_value);
     return (return_value);
 }
 
@@ -803,6 +802,27 @@ int		start(var_t *var)
 	mlx_loop(var->mlx_ptr);
 }
 
+int	getMapIndex(var_t *var)
+{
+	char toSearch[3] = "1 1";
+	int i;
+	int j;
+	
+	i = 0;
+	j = 0;
+	while (var->paramFile[i])
+	{
+		write(1, &var->paramFile[i], 1);
+		i++;
+	}
+	return (i);
+}
+
+void	getMapFromParamFile(var_t *var)
+{
+	int i = getMapIndex(var);
+}
+
 void	init_struct(var_t *var, char **argv)
 {
 	int fd;
@@ -814,6 +834,7 @@ void	init_struct(var_t *var, char **argv)
 	var->ParamSliced = NULL;
     fd = open(argv[1], O_RDONLY);
     getParamFile(fd, &line, var);
+	getMapFromParamFile(var);
     i = 0;
     while (var->paramFile[i])
     {
