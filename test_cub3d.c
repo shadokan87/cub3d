@@ -884,8 +884,7 @@ void getMapFromParamFile(var_t *var)
 	int index = getMapIndex(var);
 	int width = getMapWidth(var, index);
 	int height = getMapHeight(var, index);
-
-	//var->map = copyMap(height, width, index, var);
+	var->map = duplicate_map(var);
 }
 
 void	init_struct(var_t *var, char **argv, int worldMap[mapWidth][mapHeight])
@@ -900,7 +899,6 @@ void	init_struct(var_t *var, char **argv, int worldMap[mapWidth][mapHeight])
     fd = open(argv[1], O_RDONLY);
     getParamFile(fd, &line, var);
 	getMapFromParamFile(var);
-	var->map = duplicate_map(var);
     i = 0;
     while (var->paramFile[i])
     {
