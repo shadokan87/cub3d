@@ -802,6 +802,41 @@ int		start(var_t *var)
 	mlx_loop(var->mlx_ptr);
 }
 
+int	**copyMap(int height, int width, int index, var_t *var)
+{
+	int **map;
+	char **str;
+	int i;
+	int y;
+
+	i = 0;
+	y = 0;
+	map = malloc(sizeof(int *) * height);
+	str = ft_split(&var->paramFile[index], '\n');
+	while (i < height)
+  {
+    map[i] = malloc(sizeof(int) * height);
+    i++;
+  }
+  i = 0;
+  while (y < height)
+  {
+    while (i < width)
+  {
+    map[y][i] = str[y][i] == ' ' ? str[y][i + 1] : str[y][i];
+	if (map[y][i] == 6)
+	{
+		var->spriteX = i;
+		var->spriteY = y;
+	}
+    i++;
+  }
+  i = 0;
+  y++;
+  } 
+	return (map);
+}
+
 int	getMapIndex(var_t *var)
 {
 	char toSearch[3] = "1 1";
@@ -812,15 +847,48 @@ int	getMapIndex(var_t *var)
 	j = 0;
 	while (var->paramFile[i])
 	{
-		write(1, &var->paramFile[i], 1);
+		if (var->paramFile[i] == '1' && var->paramFile[i + 1] == ' ' && var->paramFile[i + 2] == '1')
+			return (i);
 		i++;
 	}
-	return (i);
+	return (-1);
 }
 
-void	getMapFromParamFile(var_t *var)
+int getMapHeight(var_t *var, int i)
 {
-	int i = getMapIndex(var);
+	int height;
+	char **count = ft_split(&var->paramFile[i], '\n');
+
+	height = 0;
+	while (count[height] != NULL)
+	{
+		height++;
+	}
+	return (height);
+}
+
+int	getMapWidth(var_t *var, int i)
+{
+	int width;
+	width = 0;
+	while (var->paramFile[i] != '\n')
+	{
+		if (var->paramFile[i] == ' ' && var->paramFile[i + 1] != '1')
+			return (-1);
+		while (var->paramFile [i] == ' ')
+			i++;
+		i++;
+		width++;
+	}
+return (width);
+}
+
+void getMapFromParamFile(var_t *var)
+{
+	int index = getMapIndex(var);
+	int width = getMapWidth(var, index);
+	int height = getMapHeight(var, index);
+	int **map = copyMap(height, width, index, var);
 }
 
 void	init_struct(var_t *var, char **argv)
