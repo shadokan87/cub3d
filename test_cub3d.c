@@ -118,7 +118,7 @@ typedef struct var_s
 	//
 
 	//
-	double zBuffer[1200];
+	double zBuffer[10000];
 	int sX;
 	int y;
 	double spriteX;
@@ -292,8 +292,8 @@ void	init_raycast(var_t *var)
 	var->s_h = var->s_h;
 	var->img = mlx_new_image(var->mlx_ptr, var->s_w, var->s_h);
 	var->addr = mlx_get_data_addr(var->img, &var->bpp, &var->line, &var->endian);
-	var->posX = 10;
-	var->posY = 5;
+	var->posX = 2;
+	var->posY = 1;
 	var->dirX = -1;
 	var->dirY = 0;
 	var->planeX = 0;
@@ -433,8 +433,6 @@ void	draw_sprite(var_t *var, int numSprites)
 	}
 	
 }
-
-
 
 void	draw_texture(var_t *var)
 {
@@ -844,39 +842,35 @@ int	getMapWidth(var_t *var, int i)
 return (width);
 }
 
-int	getMapToken(char c)
+void getMapToken(char *str, int y, int i, var_t *var)
 {
-
+	if (str[0] == 'N')
+		var->map[y][i] = 2;
+	else if (str[0] == 'S')
+		var->map[y][i] = 3;
+	else if (str[0] == 'W')
+		var->map[y][i] = 4;
+	else if (str[0] == 'E')
+		var->map[y][i] = 5;
+	else if (str[0] == '2')
+		var->map[y][i] = 6;
+	else
+	 var->map[y][i] = ft_atoi(str);
 }
 
-// void duplicate_map(var_t *var, int height, int width)
-// {
-// 	int **map;
-// 	char **str;
-// 	int i;
-// 	int y;
-// 	// height = y
-// 	i = 0;
-// 	y = 0;
-// 	var->map = malloc(sizeof(int[14][24]));
-// 	str = ft_split(&var->paramFile[getMapIndex(var)], '\n');
-// 	//ft_putnbr(var->map[21][12]);
-// }
-
-int	**duplicate_map(var_t *var, int height, int width)
+void	**duplicate_map(var_t *var, int height, int width)
 {
-	int **map;
 	char **str;
 	int i;
 	int y;
 	
 	i = 0;
 	y = 0;
-	map = malloc(sizeof(int *) * height);
+	var->map = malloc(sizeof(int *) * height);
 	str = ft_split(&var->paramFile[getMapIndex(var)], '\n');
 	while (i < height)
   	{
-    map[i] = malloc(sizeof(int) * width);
+    var->map[i] = malloc(sizeof(int) * width);
     i++;
   	}
   i = 0;
@@ -884,23 +878,18 @@ int	**duplicate_map(var_t *var, int height, int width)
   {
     while (i < width)
   	{
-	if (ft_split(str[y], ' ')[i][0] < '0' && ft_split(str[y], ' ')[i][0] > '9')
-		map[y][i] = getMapToken(ft_split(str[y], ' ')[i][0]);
-	else
-    	map[y][i] = ft_atoi(ft_split(str[y], ' ')[i]);
-	if (map[y][i] == 6)
+		getMapToken(ft_split(str[y], ' ')[i], y, i, var);
+	if (var->map[y][i] == 6)
 	{
 		var->spriteX = i;
 		var->spriteY = y;
-		map[y][i] = 0;
+		var->map[y][i] = 0;
 	}
     i++;
   	}
   i = 0;
   y++;
   }
-  ft_putstr("here");
-	return (map);
 }
 
 void getMapFromParamFile(var_t *var)
@@ -908,7 +897,7 @@ void getMapFromParamFile(var_t *var)
 	int index = getMapIndex(var);
 	var->m_width = getMapWidth(var, index);
 	var->m_height = getMapHeight(var, index);
-	var->map = duplicate_map(var, var->m_height, var->m_width);
+	duplicate_map(var, var->m_height, var->m_width);
 	//ft_putnbr(var->map[21][12]);
 }
 
