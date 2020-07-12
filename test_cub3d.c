@@ -12,8 +12,6 @@
 
 #define rotSpeed 0.02
 #define moveSpeed 0.1
-#define mapWidth 24
-#define mapHeight 24
 
 void	ft_putstr(char *str)
 {
@@ -106,6 +104,8 @@ typedef struct var_s
 	int	x;
 	int	s_h;
 	int	s_w;
+	int m_width;
+	int m_height;
 	//
 	char **text_paths;
 	int **loaded_text;
@@ -292,8 +292,8 @@ void	init_raycast(var_t *var)
 	var->s_h = var->s_h;
 	var->img = mlx_new_image(var->mlx_ptr, var->s_w, var->s_h);
 	var->addr = mlx_get_data_addr(var->img, &var->bpp, &var->line, &var->endian);
-	var->posX = 22;
-	var->posY = 12;
+	var->posX = 10;
+	var->posY = 5;
 	var->dirX = -1;
 	var->dirY = 0;
 	var->planeX = 0;
@@ -808,7 +808,7 @@ int	getMapIndex(var_t *var)
 	
 	i = 0;
 	j = 0;
-	while (var->paramFile[i])
+	while (var->paramFile && var->paramFile[i])
 	{
 		if (var->paramFile[i] == '1' && var->paramFile[i + 1] == ' ' && var->paramFile[i + 2] == '1')
 			return (i);
@@ -834,9 +834,9 @@ int	getMapWidth(var_t *var, int i)
 {
 	int width;
 	width = 0;
-	while (var->paramFile[i] != '\n')
+	while (var->paramFile && var->paramFile[i] != '\n')
 	{
-		while (var->paramFile [i] == ' ')
+		while (var->paramFile && var->paramFile [i] == ' ')
 			i++;
 		i++;
 		width++;
@@ -844,7 +844,26 @@ int	getMapWidth(var_t *var, int i)
 return (width);
 }
 
-int	**duplicate_map(var_t *var)
+int	getMapToken(char c)
+{
+
+}
+
+// void duplicate_map(var_t *var, int height, int width)
+// {
+// 	int **map;
+// 	char **str;
+// 	int i;
+// 	int y;
+// 	// height = y
+// 	i = 0;
+// 	y = 0;
+// 	var->map = malloc(sizeof(int[14][24]));
+// 	str = ft_split(&var->paramFile[getMapIndex(var)], '\n');
+// 	//ft_putnbr(var->map[21][12]);
+// }
+
+int	**duplicate_map(var_t *var, int height, int width)
 {
 	int **map;
 	char **str;
@@ -853,41 +872,47 @@ int	**duplicate_map(var_t *var)
 	
 	i = 0;
 	y = 0;
-	map = malloc(sizeof(int *) * 24);
+	map = malloc(sizeof(int *) * height);
 	str = ft_split(&var->paramFile[getMapIndex(var)], '\n');
-	while (i < 24)
-  {
-    map[i] = malloc(sizeof(int) * 24);
+	while (i < height)
+  	{
+    map[i] = malloc(sizeof(int) * width);
     i++;
-  }
+  	}
   i = 0;
-  while (y < 24)
+  while (y < height)
   {
-    while (i < 24)
-  {
-    map[y][i] = ft_atoi(ft_split(str[y], ' ')[i]);
+    while (i < width)
+  	{
+	if (ft_split(str[y], ' ')[i][0] < '0' && ft_split(str[y], ' ')[i][0] > '9')
+		map[y][i] = getMapToken(ft_split(str[y], ' ')[i][0]);
+	else
+    	map[y][i] = ft_atoi(ft_split(str[y], ' ')[i]);
 	if (map[y][i] == 6)
 	{
 		var->spriteX = i;
 		var->spriteY = y;
+		map[y][i] = 0;
 	}
     i++;
-  }
+  	}
   i = 0;
   y++;
-  } 
+  }
+  ft_putstr("here");
 	return (map);
 }
 
 void getMapFromParamFile(var_t *var)
 {
 	int index = getMapIndex(var);
-	int width = getMapWidth(var, index);
-	int height = getMapHeight(var, index);
-	var->map = duplicate_map(var);
+	var->m_width = getMapWidth(var, index);
+	var->m_height = getMapHeight(var, index);
+	var->map = duplicate_map(var, var->m_height, var->m_width);
+	//ft_putnbr(var->map[21][12]);
 }
 
-void	init_struct(var_t *var, char **argv, int worldMap[mapWidth][mapHeight])
+void	init_struct(var_t *var, char **argv)
 {
 	int fd;
     char *line;
@@ -915,41 +940,13 @@ void	init_struct(var_t *var, char **argv, int worldMap[mapWidth][mapHeight])
 
 int	main(int argc, char **argv)
 {
-	int worldMap[mapWidth][mapHeight]=
-{
-  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,2,2,2,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1},
-  {1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,3,0,0,0,3,0,0,0,1},
-  {1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,2,2,0,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,1},
-  {1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,4,0,0,0,0,5,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,4,0,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
-};
 	var_t var;
 
-	init_struct(&var, argv, worldMap);
+	init_struct(&var, argv);
 	if ((var.mlx_ptr = mlx_init()) == NULL)
 		return (EXIT_FAILURE);
 	if ((var.mlx_win = mlx_new_window(var.mlx_ptr, var.s_w, var.s_h, "cub3d")) == NULL)
 	return (EXIT_FAILURE);
-	//var.map = duplicate_map(worldMap, &var);
 	init_raycast(&var);
 	init_keys(&var, 5);
 	start(&var);
