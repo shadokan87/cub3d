@@ -86,8 +86,10 @@ typedef struct var_s
 
 	//
 	double zBuffer[10000];
-	int sX;
 	int y;
+	int spriteNum;
+	int *sX;
+	int *sY;
 	double spriteX;
 	double spriteY;
 	double sprite;
@@ -184,7 +186,7 @@ char *removeS(char *str, var_t *var)
 				str[i] = '2';
 			else if (str[i] == 'W')
 				str[i] = '4';
-			else if (str[i] == 'S')
+			else if (str[i] == '2')
 				str[i] = '6';
 			else if (str[i] == 'E')
 				str[i] = '5';
@@ -423,14 +425,17 @@ void	draw_info(var_t *var)
 		var->drawEnd = var->s_h - 1;
 }
 
-void	draw_sprite(var_t *var, int numSprites)
+void	draw_sprite(var_t *var)
 {
-	
+	ft_printf("doing");
+	int z = 0;
+	while (z < var->spriteNum)
+	{
 	int x;
 	int y;
 	double vMove = 0.0;
-	double spriteX = var->spriteX - var->posX;
-	double spriteY = var->spriteY - var->posY;
+	double spriteX = var->sX[z] - var->posX;
+	double spriteY = var->sY[z] - var->posY;
 
 	double invDet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
 
@@ -476,6 +481,8 @@ void	draw_sprite(var_t *var, int numSprites)
 			}
 		}
 	}
+	z++;
+	}
 	
 }
 
@@ -487,10 +494,7 @@ void	draw_texture(var_t *var)
 	double wallx;
 	double step;
 	double texpos;
-
-
-	if (var->hit == 6)
-		return ;
+		
 	if (var->side == 0)
 		wallx = var->posY + var->perpWallDist * var->rayDirY;
 	else
@@ -550,13 +554,13 @@ void	raycast(var_t *var)
 		verline(var, var->x, var->s_h / 2, var->s_h, rgb_int(var->F_color[0], var->F_color[1], var->F_color[2]));
 		if (var->hit == 1)
 			draw(var);
-		if (var->hit > 1)
+		if (var->hit > 1 && var->hit != 6)
 			draw_texture(var);
 		var->zBuffer[var->x] = var->perpWallDist;
 		var->x++;
 		
 	}
-	draw_sprite(var, 1);
+	draw_sprite(var);
 }
 
 void	init_keys(var_t *var, int key_number)
@@ -873,6 +877,25 @@ int	getMapWidth(var_t *var, int i)
 return (width);
 }
 
+void	spriteMatrix(var_t *var, int y, int i)
+{
+	if (var->spriteNum == 0)
+	{
+	var->spriteNum++;
+	var->sX = (int *)malloc(sizeof(int *) * var->spriteNum);
+	var->sY = (int *)malloc(sizeof(int *) * var->spriteNum);
+	}
+	else
+	{
+		var->spriteNum++;
+		var->sX = (int *)realloc(var->sX, sizeof(int *) * var->spriteNum);
+		var->sY = (int *)realloc(var->sX, sizeof(int *) * var->spriteNum);
+	}
+	var->sX[var->spriteNum == 1 ? 0 : var->spriteNum - 1] = y;
+	var->sY[var->spriteNum == 1 ? 0 : var->spriteNum - 1] = i;
+	var->map[y][i] = 0;
+}
+
 void duplicate_map(var_t *var, int height, int width)
 {
 	char **str;
@@ -884,6 +907,7 @@ void duplicate_map(var_t *var, int height, int width)
 	i = 0;
 	y = 0;
 	var->map = malloc(sizeof(int *) * height);
+	var->spriteNum = 0;
 	str2 = ft_split(&var->paramFile[getMapIndex(var)], '\n');
 	while (i < height)
   	{
@@ -898,31 +922,13 @@ void duplicate_map(var_t *var, int height, int width)
 		 str = ft_split(str2[y], ' ');
 		
 		 var->map[y][i] = str[i][0] - '0';
- 		  //var->map[y][i] = 3;
-		//   if (ft_split(str[y], ' ')[i][0] == 'N')
-		//   var->map[y][i] = 2;
-		//   else if (ft_split(str[y], ' ')[i][0] == 'W')
-		//   var->map[y][i] = 4;
-		//   else if (ft_split(str[y], ' ')[i][0] == 'E')
-		//   var->map[y][i] = 5;
-		//   else if (ft_split(str[y], ' ')[i][0] == '2')
-		//   var->map[y][i] = 6;
-		//   else if (ft_split(str[y], ' ')[i][0] == '1')
-		//   var->map[y][i] = 1;
-		//   else if (ft_split(str[y], ' ')[i][0] == '0')
-		//   var->map[y][i] = 0;
-		//   else
-		//   {
-		// 	c = 'S';
-		//   }
-		  
-		
-	if (var->map[y][i] == 6)
-	{
-		var->spriteX = i;
-		var->spriteY = y;
-		var->map[y][i] = 0;
-	}
+ 		if (var->map[y][i] == 6)
+		 {
+			 spriteMatrix(var, y, i);
+			 var->spriteX = y;
+			 var->spriteY = i;
+		 }
+			
     i++;
   	}
   i = 0;
