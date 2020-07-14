@@ -5,47 +5,14 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "gnl_working/get_next_line.h"
-#include "libft/libft.h"
+//#include "libft/libft.h"
+#include "printf/lprintf.h"
 #include <mlx.h>
 #include <math.h>
 #include <unistd.h>
 
-#define rotSpeed 0.02
+#define rotSpeed 0.1
 #define moveSpeed 0.1
-
-void	ft_putstr(char *str)
-{
-	int i;
-
-	i = -1;
-	while (str[++i]);
-	write(1, str, i);
-}
-
-void	ft_putchar(char c)
-{
-	write(1, &c, 1);
-}
-
-void	ft_putnbr(int nb)
-{
-	int neg;
-
-	neg = 0;
-	neg = nb < 0 ? 1 : 0;
-	neg ? ft_putchar('-') : 0;
-	if (nb == -2147483648)
-		ft_putstr("2147483648");
-	if (nb == 0)
-		ft_putchar('0');
-	if (nb == 0 || nb == -2147483648)
-		return ;
-	nb < 0 ? (nb = -nb) : 0;
-	if (nb == 0)
-		ft_putchar(0);
-	nb > 9 ? ft_putnbr(nb / 10) : 0;
-	ft_putchar(nb % 10 + '0');
-}
 
 typedef struct var_s
 {
@@ -180,14 +147,71 @@ char *Remove_extraSpaces(char *str)
     return (return_value);
 }
 
+int	getMapIndex(var_t *var)
+{
+	char toSearch[3] = "1 1";
+	int i;
+	int j;
+	
+	i = 0;
+	j = 0;
+	while (var->paramFile && var->paramFile[i])
+	{
+		if (var->paramFile[i] == '1' && var->paramFile[i + 1] == ' ' && var->paramFile[i + 2] == '1')
+			return (i);
+		i++;
+	}
+	return (-1);
+}
+
+int     ft_tolower(int c)
+{
+        if (c >= 'A' && c <= 'Z')
+                return (c + 32);
+        return (c);
+}
+
+char *removeS(char *str, var_t *var)
+{
+	int i = 0;
+	while (str[i])
+	{
+		if (getMapIndex(var) != -1)
+		{
+			if (str[i] == 'S')
+				str[i] = '3';
+			else if (str[i] == 'N')
+				str[i] = '2';
+			else if (str[i] == 'W')
+				str[i] = '4';
+			else if (str[i] == 'S')
+				str[i] = '6';
+			else if (str[i] == 'E')
+				str[i] = '5';
+		}
+		//str[i] = ft_tolower(str[i]);		
+		i++;
+	}
+	return (str);
+}
+
 void    getParamFile(int fd, char **line, var_t *var)
 {
     int ret;
+	int i;
 	char *to_free;
+	char *str;
 
+//ft_printf("-->%d\n", (int)'s');
     ret = 0;
+	i = 0;
     while ((ret = get_next_line(fd, line)) > 0)
-       var->paramFile = ft_strjoin(var->paramFile ? var->paramFile : "", *line);
+	{	
+			*line = removeS(*line, var);
+			ft_printf("%s", *line);
+		var->paramFile = ft_strjoin(var->paramFile ? var->paramFile : "", *line);
+	}
+		
 	// to_free = var->paramFile;
 	// var->paramFile = Remove_extraSpaces(var->paramFile);
 	// free(to_free);
@@ -231,6 +255,27 @@ void   fillLoopParams(var_t *var)
     i = 0;
     while (var->ParamSliced[i] != NULL)
     {
+if (ft_strcmp(var->ParamSliced[i], "r"))
+        {
+            var->s_w = ft_atoi(var->ParamSliced[i + 1]);
+            var->s_h = ft_atoi(var->ParamSliced[i + 2]);
+        }
+        // if (ft_strcmp(var->ParamSliced[i], "no"))
+        //     var->text_paths[2] = ft_strdup(var->ParamSliced[i + 1]);
+        // if (ft_strcmp(var->ParamSliced[i], "so"))
+        //     var->text_paths[3] = ft_strdup(var->ParamSliced[i + 1]);
+        // if (ft_strcmp(var->ParamSliced[i], "we"))
+        //     var->text_paths[4] = ft_strdup(var->ParamSliced[i + 1]);
+        // if (ft_strcmp(var->ParamSliced[i], "ea"))
+        //     var->text_paths[5] = ft_strdup(var->ParamSliced[i + 1]);
+        // if (ft_strcmp(var->ParamSliced[i], "s"))
+        //     var->text_paths[6] = ft_strdup(var->ParamSliced[i + 1]);
+        // if (ft_strcmp(var->ParamSliced[i], "f") || ft_strcmp(var->ParamSliced[i], "c"))
+        //     fill_color(var, i);
+		// else if (i <= 8 &&i != 7)
+		// 	var->text_paths[i] = NULL;
+        // i++;
+
         if (ft_strcmp(var->ParamSliced[i], "R"))
         {
             var->s_w = ft_atoi(var->ParamSliced[i + 1]);
@@ -239,7 +284,7 @@ void   fillLoopParams(var_t *var)
         if (ft_strcmp(var->ParamSliced[i], "NO"))
             var->text_paths[2] = ft_strdup(var->ParamSliced[i + 1]);
         if (ft_strcmp(var->ParamSliced[i], "SO"))
-            var->text_paths[3] = ft_strdup(var->ParamSliced[i + 1]);
+			var->text_paths[3] = ft_strdup(var->ParamSliced[i + 1]);
         if (ft_strcmp(var->ParamSliced[i], "WE"))
             var->text_paths[4] = ft_strdup(var->ParamSliced[i + 1]);
         if (ft_strcmp(var->ParamSliced[i], "EA"))
@@ -734,11 +779,14 @@ int	load_text(var_t *var)
 	{
 		if (var->text_paths[i])
 		{
-			if (i == 6)
-				ft_putstr(var->text_paths[i]);
+			ft_printf("---->%s |%d|\n", var->text_paths[i],i);
+			// if (i == 6)
+			// 	ft_putstr(var->text_paths[i]);
 			var->loaded_text[i] = mlx_xpm_file_to_image(var->mlx_ptr, var->text_paths[i], &var->tex_w, &var->tex_h);
 			var->loaded_addr[i] = (int *)mlx_get_data_addr(var->loaded_text[i], &t_bpp, &t_line, &t_endian);
 		}
+		else
+		ft_printf("ERR: --> %d\n", i);
 		i++;
 	}
 }
@@ -798,23 +846,6 @@ int	**copyMap(int height, int width, int index, var_t *var)
 	return (map);
 }
 
-int	getMapIndex(var_t *var)
-{
-	char toSearch[3] = "1 1";
-	int i;
-	int j;
-	
-	i = 0;
-	j = 0;
-	while (var->paramFile && var->paramFile[i])
-	{
-		if (var->paramFile[i] == '1' && var->paramFile[i + 1] == ' ' && var->paramFile[i + 2] == '1')
-			return (i);
-		i++;
-	}
-	return (-1);
-}
-
 int getMapHeight(var_t *var, int i)
 {
 	int height;
@@ -842,32 +873,18 @@ int	getMapWidth(var_t *var, int i)
 return (width);
 }
 
-void getMapToken(char *str, int y, int i, var_t *var)
-{
-	if (str[0] == 'N')
-		var->map[y][i] = 2;
-	else if (str[0] == 'S')
-		var->map[y][i] = 3;
-	else if (str[0] == 'W')
-		var->map[y][i] = 4;
-	else if (str[0] == 'E')
-		var->map[y][i] = 5;
-	else if (str[0] == '2')
-		var->map[y][i] = 6;
-	else
-	 var->map[y][i] = ft_atoi(str);
-}
-
-void	**duplicate_map(var_t *var, int height, int width)
+void duplicate_map(var_t *var, int height, int width)
 {
 	char **str;
+	char c;
+	char **str2;
 	int i;
 	int y;
 	
 	i = 0;
 	y = 0;
 	var->map = malloc(sizeof(int *) * height);
-	str = ft_split(&var->paramFile[getMapIndex(var)], '\n');
+	str2 = ft_split(&var->paramFile[getMapIndex(var)], '\n');
 	while (i < height)
   	{
     var->map[i] = malloc(sizeof(int) * width);
@@ -878,7 +895,28 @@ void	**duplicate_map(var_t *var, int height, int width)
   {
     while (i < width)
   	{
-		getMapToken(ft_split(str[y], ' ')[i], y, i, var);
+		 str = ft_split(str2[y], ' ');
+		
+		 var->map[y][i] = str[i][0] - '0';
+ 		  //var->map[y][i] = 3;
+		//   if (ft_split(str[y], ' ')[i][0] == 'N')
+		//   var->map[y][i] = 2;
+		//   else if (ft_split(str[y], ' ')[i][0] == 'W')
+		//   var->map[y][i] = 4;
+		//   else if (ft_split(str[y], ' ')[i][0] == 'E')
+		//   var->map[y][i] = 5;
+		//   else if (ft_split(str[y], ' ')[i][0] == '2')
+		//   var->map[y][i] = 6;
+		//   else if (ft_split(str[y], ' ')[i][0] == '1')
+		//   var->map[y][i] = 1;
+		//   else if (ft_split(str[y], ' ')[i][0] == '0')
+		//   var->map[y][i] = 0;
+		//   else
+		//   {
+		// 	c = 'S';
+		//   }
+		  
+		
 	if (var->map[y][i] == 6)
 	{
 		var->spriteX = i;
