@@ -107,6 +107,7 @@ typedef struct var_s
 	int drawEndY;
 	int texX;
 	int texY;
+	int **spriteMap;
 	//
 	char	*addr;
 	void	*mlx_ptr;
@@ -210,7 +211,7 @@ void    getParamFile(int fd, char **line, var_t *var)
     while ((ret = get_next_line(fd, line)) > 0)
 	{	
 			*line = removeS(*line, var);
-			//ft_printf("%s", *line);
+			ft_printf("%s", *line);
 		var->paramFile = ft_strjoin(var->paramFile ? var->paramFile : "", *line);
 	}
 		
@@ -427,11 +428,15 @@ void	draw_info(var_t *var)
 
 void	draw_sprite(var_t *var)
 {
+	ft_printf("doing");
+	int z = 0;
+	while (z < var->spriteNum)
+	{
 	int x;
 	int y;
 	double vMove = 0.0;
-	double spriteX = var->mapX - var->posX;
-	double spriteY = var->mapY - var->posY;
+	double spriteX = var->sX[z] - var->posX;
+	double spriteY = var->sY[z] - var->posY;
 
 	double invDet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
 
@@ -476,7 +481,10 @@ void	draw_sprite(var_t *var)
 				if ((color & 0x00FFFFFF) != 0) pixel_put(var, x, y, color);
 			}
 		}
-	}	
+	}
+	z++;
+	}
+	
 }
 
 void	draw_texture(var_t *var)
@@ -889,6 +897,21 @@ void	spriteMatrix(var_t *var, int y, int i)
 	var->map[y][i] = 0;
 }
 
+void spriteMap(var_t *var, int height, int width)
+{
+	int i;
+	int y;
+	
+	i = 0;
+	y = 0;
+	var->spriteMap = malloc(sizeof(int *) * height);
+	while (i < height)
+  	{
+    var->spriteMap[i] = malloc(sizeof(int) * width);
+    i++;
+  	}
+}
+
 void duplicate_map(var_t *var, int height, int width)
 {
 	char **str;
@@ -915,7 +938,12 @@ void duplicate_map(var_t *var, int height, int width)
 		 str = ft_split(str2[y], ' ');
 		
 		 var->map[y][i] = str[i][0] - '0';
-			
+		 var->spriteMap[y][i] = 0;
+ 		if (var->map[y][i] == 6)
+		 {
+			 var->spriteMap[y][i] = 6;
+			 var->map[y][i] = 0;
+		 }	
     i++;
   	}
   i = 0;
@@ -928,7 +956,21 @@ void getMapFromParamFile(var_t *var)
 	int index = getMapIndex(var);
 	var->m_width = getMapWidth(var, index);
 	var->m_height = getMapHeight(var, index);
+	spriteMap(var, var->m_height, var->m_width);
 	duplicate_map(var, var->m_height, var->m_width);
+		 int i = 0;
+		 int y = 0;
+  while (y < var->m_height)
+  {
+    while (i < var->m_width)
+  	{
+	ft_printf("%d", var->spriteMap[y][i]);
+    i++;
+  	}
+	  ft_printf("\n");
+  i = 0;
+  y++;
+  }
 	//ft_putnbr(var->map[21][12]);
 }
 
