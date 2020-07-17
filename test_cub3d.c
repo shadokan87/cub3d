@@ -40,13 +40,19 @@ typedef struct var_s
 	int stepY;
 	int hit;
 	int wallx;
+	int ompx;
+	int ompy;
 	int tex_y;
 	int texpos;
 	int tex_x;
 	int tex_h;
 	int tex_w;
+	int **spriteQueue;
+	int *queue;
+	double *dist;
 	void *t_img;
 	int *t_addr;
+	int spriteHit;
 	int side;
 	int lineHeight;
 	int drawStart;
@@ -373,65 +379,186 @@ void	step(var_t *var)
 	}
 }
 
-void	hit(var_t *var)
+int	distIsSorted(var_t *var, double *dist)
 {
-	//hit
-	while (var->hit == 0)
+
+}
+
+void	swapQueueRev(var_t *var, double *dist)
+{
+	int i;
+	double swap;
+	int x;
+	int y;
+
+	x = 0;
+	y = 0;
+	i = 1;
+
+	//ft_printf("rev");
+	while (i < var->spriteNum)
 	{
-		if (var->sideDistX < var->sideDistY)
-		{
-			var->sideDistX += var->deltaDistX;
-			var->mapX += var->stepX;
-			var->side = 0;
+		if (dist[i - 1] < dist[i])
+		{//ft_printf("here");
+			swap = dist[i - 1];
+			dist[i - 1] = dist[i];
+			dist[i] = swap;
+			x = var->spriteQueue[i - 1][0];
+			y = var->spriteQueue[i - 1][1];
+			var->spriteQueue[i - 1][0] = var->spriteQueue[i][0];
+			var->spriteQueue[i - 1][1] = var->spriteQueue[i][1];
+			var->spriteQueue[i][0] = x;
+			var->spriteQueue[i][1] = y;
+			i = 1;
+			x = 0;
+			y = 0;
 		}
 		else
-		{
-			var->sideDistY += var->deltaDistY;
-			var->mapY += var->stepY;
-			var->side = 1;
-		}
-		if (var->map[var->mapX][var->mapY] > 0)
-		{
-			var->hit = var->map[var->mapX][var->mapY];
-			var->wallx = var->hit;
-		}
-			
+			i++;
+		
 	}
-	if (var->side == 0)
-		var->perpWallDist = (var->mapX - var->posX + (1 - 
-		var->stepX) / 2) / var->rayDirX;
-	else
-		var->perpWallDist = (var->mapY - var->posY + (1 - var->stepY) / 2) / var->rayDirY;	
 }
 
-void	cls(var_t *var)
+int *cpy(var_t *var, int *tab)
 {
-	int x = 0;
-	while (x < var->s_w)
+	int *ret = malloc(sizeof(int) * 2);
+	ret[0] = tab[0];
+	ret[1] = tab[1];
+	return (ret);
+}
+
+void	swapQueue(var_t *var, double *dist)
+{
+
+	int i = 0;
+	int x;
+	int y;
+
+	int *swap;
+
+	// swap = cpy(var, var->spriteQueue[0]);
+	// var->spriteQueue[0] = cpy(var, var->spriteQueue[1]);
+	// var->spriteQueue[1] = cpy(var, swap);
+ 	// int i;
+	// double swap;
+	// int x;
+	// int y;
+
+	// x = 0;
+	// y = 0;
+	// i = 1;
+	// //printf("d");
+	// //ft_printf("normal %d\n", distIsSorted(var, dist));
+	// ft_printf("here");
+	// while (i < var->spriteNum)
+	// {
+	// 	if (dist[i - 1] > dist[i])
+	// 	{//ft_printf("here");
+	// 		swap = dist[i - 1];
+	// 		dist[i - 1] = dist[i];
+	// 		dist[i] = swap;
+	// 		x = var->spriteQueue[i - 1][0];
+	// 		y = var->spriteQueue[i - 1][1];
+	// 		var->spriteQueue[i - 1][0] = var->spriteQueue[i][0];
+	// 		var->spriteQueue[i - 1][1] = var->spriteQueue[i][1];
+	// 		var->spriteQueue[i][0] = x;
+	// 		var->spriteQueue[i][1] = y;
+	// 		i = 1;
+	// 		x = 0;
+	// 		y = 0;
+	// 	}
+	// 	else
+	// 		i++;
+		
+	// }
+}
+
+double	*getDist(var_t *var)
+{
+	int i;
+	double *dist;
+	double swap;
+
+	dist = (double *)malloc(sizeof(double) * var->spriteNum);
+	i = 0;
+	while (i < var->spriteNum)
 	{
-		verline(var, x, 0, var->s_h, 0);
-		x++;
+		dist[i] = ((var->posX - var->spriteQueue[i][0]) *
+		(var->posX - var->spriteQueue[i][0])
+		+ (var->posY - var->spriteQueue[i][1])
+		* var->posY - var->spriteQueue[i][1]);
+		i++;
+	}
+	return (dist);
+}
+
+void	swapQ(var_t *var)
+{
+	int i;
+	int y;
+	int swap2;
+	int swap3;
+	double swap;
+
+	i = 1;
+	y = i;
+	while (i < var->spriteNum)
+	{
+		if (var->dist[i] > var->dist[i - 1])
+		{
+			//printf("test");
+			swap = var->dist[i - 1];
+			var->dist[i - 1] = var->dist[i];
+			var->dist[i] = swap;
+			i = 1;
+ 		}
+		else
+		i++;
 	}
 }
 
-void	draw_info(var_t *var)
+int	**sortQueue(var_t *var)
 {
-	var->lineHeight = (int)(var->s_h / var->perpWallDist);
-	var->drawStart = -var->lineHeight / 2 + var->s_h / 2;
-	if (var->drawStart < 0)
-		var->drawStart = 0;
-	var->drawEnd = var->lineHeight / 2 + var->s_h / 2;
-	if (var->drawEnd >= var->s_h)
-		var->drawEnd = var->s_h - 1;
+	int i;
+	int y;
+	int swap;
+
+	var->dist = getDist(var);
+	var->queue = malloc(sizeof(int) * var->spriteNum * 2 + 1);
+	i = 0;
+	y = 0;
+	while (i < var->spriteNum)
+	{
+		var->queue[y] = var->spriteQueue[i][0];
+		var->queue[y + 1] = var->spriteQueue[i][1];
+		y+=2;
+		i++;
+	}
+	var->queue[y] = -9;
+	i = 0;
+	swapQ(var);
+	printf("START\n");
+	while (var->queue[i] != -9)
+	{
+		printf("%d, \n", var->queue[i]);
+		i++;
+	}
+	// printf("\n");
+	// while (i < var->spriteNum)
+	// {
+	// 	printf("%f, ", dist[i]);
+	// 	i++;
+	// }
+	// printf("\n");
 }
 
-void	draw_sprite(var_t *var)
+void	draw_sprite(var_t *var, int sx, int sy)
 {
 	int x;
 	int y;
 	double vMove = 0.0;
-	double spriteX = var->mapX - var->posX;
-	double spriteY = var->mapY - var->posY;
+	double spriteX = sx - var->posX;
+	double spriteY = sy - var->posY;
 
 	double invDet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
 
@@ -479,6 +606,118 @@ void	draw_sprite(var_t *var)
 	}	
 }
 
+// void	draw_sprite(var_t *var)
+// {
+// 	int z = 0;;
+
+// 	while (z < var->spriteNum)
+// 	{
+// 	int x;
+// 	int y;
+// 	double vMove = 0.0;
+// 	double spriteX = var->spriteQueue[z][0] - var->posX;
+// 	double spriteY = var->spriteQueue[z][1] - var->posY;
+// 	printf("%d %d\n", var->spriteQueue[z][0], var->spriteQueue[z][1]);
+
+// 	double invDet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
+
+// 	double transformX = invDet * (var->dirY * spriteX - var->dirX * spriteY);
+// 	double transformY = invDet * (-var->planeY * spriteX + var->planeX * spriteY);
+// 	int vMoveScreen = (int)(vMove / transformY);
+
+// 	int spriteScreenX = (int)((var->s_w / 2 * (1 + transformX / transformY)));
+
+// 	int spriteHeight = abs((int)(var->s_h / (transformY)));
+
+// 	int drawStartY = -spriteHeight / 2 + var->s_h / 2 + vMoveScreen;
+// 	if (drawStartY < 0)
+// 		drawStartY = 0;
+// 	int drawEndY = spriteHeight / 2 + var->s_h / 2 + vMoveScreen;
+// 	if (drawEndY >= var->s_h)
+// 		drawEndY = var->s_h - 1;
+
+// 	int spriteWidth = abs((int)(var->s_h / (transformY)));
+// 	int drawStartX = -spriteWidth / 2 + spriteScreenX;
+// 	if (drawStartX < 0)
+// 		drawStartX = 0;
+// 	int drawEndX = spriteWidth / 2 + spriteScreenX;
+// 	if (drawEndX >= var->s_w)
+// 		drawEndX = var->s_w - 1;
+// 	x = drawStartX - 1;
+// 	int t_bpp;
+// 	int t_line;
+// 	int t_endian;
+// 	while (++x < drawEndX)
+// 	{
+// 		if (transformY > 0 && x > 0 && x < var->s_w && transformY < var->zBuffer[x])
+// 		{
+// 			y = drawStartY - 1;
+// 			int texX = (int)(256 * (x - (-spriteWidth / 2 + spriteScreenX)) * var->tex_w/ spriteWidth) / 256;
+
+// 			while(++y < drawEndY)
+// 			{
+// 				int d = (y - vMoveScreen) * 256 - var->s_h * 128 + spriteHeight * 128;
+// 				int texY = ((d * var->tex_h / spriteHeight) / 256);
+// 				int color = var->loaded_addr[6][(texX + texY * var->tex_w)];
+// 				if ((color & 0x00FFFFFF) != 0) pixel_put(var, x, y, color);
+// 			}
+// 		}
+// 	}	
+// 		z++;
+// 	}
+// }
+
+void	hit(var_t *var)
+{
+	//hit
+	while (var->hit == 0)
+	{
+		if (var->sideDistX < var->sideDistY)
+		{
+			var->sideDistX += var->deltaDistX;
+			var->mapX += var->stepX;
+			var->side = 0;
+		}
+		else
+		{
+			var->sideDistY += var->deltaDistY;
+			var->mapY += var->stepY;
+			var->side = 1;
+		}
+		if (var->map[var->mapX][var->mapY] > 0)
+		{
+			var->hit = var->map[var->mapX][var->mapY];
+			var->wallx = var->hit;
+		}
+	}
+	if (var->side == 0)
+		var->perpWallDist = (var->mapX - var->posX + (1 - 
+		var->stepX) / 2) / var->rayDirX;
+	else
+		var->perpWallDist = (var->mapY - var->posY + (1 - var->stepY) / 2) / var->rayDirY;	
+}
+
+void	cls(var_t *var)
+{
+	int x = 0;
+	while (x < var->s_w)
+	{
+		verline(var, x, 0, var->s_h, 0);
+		x++;
+	}
+}
+
+void	draw_info(var_t *var)
+{
+	var->lineHeight = (int)(var->s_h / var->perpWallDist);
+	var->drawStart = -var->lineHeight / 2 + var->s_h / 2;
+	if (var->drawStart < 0)
+		var->drawStart = 0;
+	var->drawEnd = var->lineHeight / 2 + var->s_h / 2;
+	if (var->drawEnd >= var->s_h)
+		var->drawEnd = var->s_h - 1;
+}
+
 void	draw_texture(var_t *var)
 {
 	draw_info(var);
@@ -519,13 +758,11 @@ void	draw_texture(var_t *var)
 void	draw(var_t *var)
 {
 	draw_info(var);
-	var->color = 255;
+	var->color = rgb_int(185, 94, 255);
 	if (var->side == 1)
 		var->color = var->color / 2;
 		verline(var, var->x, var->drawStart, var->drawEnd, var->color);
 }
-
-
 
 void	raycast(var_t *var)
 {
@@ -541,19 +778,18 @@ void	raycast(var_t *var)
 		var->deltaDistX = fabs(1 / var->rayDirX);
 		var->deltaDistY = fabs(1 / var->rayDirY);
 		var->hit = 0;
+		var->spriteHit = 0;
 		step(var);
 		hit(var);
 		verline(var, var->x, 0, var->s_h / 2, rgb_int(var->C_color[0], var->C_color[1], var->C_color[2]));
 		verline(var, var->x, var->s_h / 2, var->s_h, rgb_int(var->F_color[0], var->F_color[1], var->F_color[2]));
 		if (var->hit == 1)
 			draw(var);
-		if (var->hit > 1 && var->hit != 6)
+		if (var->hit > 1)
 			draw_texture(var);
 		var->zBuffer[var->x] = var->perpWallDist;
 		var->x++;
-		
 	}
-	draw_sprite(var);
 }
 
 void	init_keys(var_t *var, int key_number)
@@ -793,6 +1029,8 @@ int		run(var_t *var)
 	int t_endian;
 	int t_bpp;
 	int t_line;
+	int i = 0;
+	int **queue = sortQueue(var);
 
 	var->tex_h = 64;
 	var->tex_w = 64;
@@ -802,6 +1040,8 @@ int		run(var_t *var)
 	|| var->R_R || var->L_R)
 		cls(var);
 	raycast(var);
+	sortQueue(var);
+	//draw_sprite(var);
 	mlx_put_image_to_window(var->mlx_ptr, var->mlx_win, var->img, 0, 0);
 }
 
@@ -870,23 +1110,39 @@ int	getMapWidth(var_t *var, int i)
 return (width);
 }
 
-void	spriteMatrix(var_t *var, int y, int i)
+void	initSpriteQueue(var_t *var)
 {
-	if (var->spriteNum == 0)
+	int i = 0;
+	int y = 0;
+	int z = 0;
+
+	var->spriteQueue = malloc(sizeof(int *) * var->spriteNum);
+	while (i < var->spriteNum)
 	{
-	var->spriteNum++;
-	var->sX = (int *)malloc(sizeof(int *) * var->spriteNum);
-	var->sY = (int *)malloc(sizeof(int *) * var->spriteNum);
+		var->spriteQueue[i] = malloc(sizeof(int) * 2);
+		i++;
 	}
-	else
-	{
-		var->spriteNum++;
-		var->sX = (int *)realloc(var->sX, sizeof(int *) * var->spriteNum);
-		var->sY = (int *)realloc(var->sX, sizeof(int *) * var->spriteNum);
-	}
-	var->sX[var->spriteNum == 1 ? 0 : var->spriteNum - 1] = y;
-	var->sY[var->spriteNum == 1 ? 0 : var->spriteNum - 1] = i;
-	var->map[y][i] = 0;
+	i = 0;
+	while (y < var->m_height)
+  	{
+    while (i < var->m_width)
+  	{
+		if (var->map[y][i] == 6)
+		{
+			var->map[y][i] = 0;
+			var->spriteX = y;
+			var->spriteY = i;
+			var->spriteQueue[z][0] = y;
+			var->spriteQueue[z][1] = i;
+			//ft_printf("\nsprite -->%d %d", var->spriteX, var->spriteQueue[0][0]);
+			z++;
+		}
+    	i++;
+  	}
+  i = 0;
+  y++;
+  }
+
 }
 
 void duplicate_map(var_t *var, int height, int width)
@@ -913,9 +1169,9 @@ void duplicate_map(var_t *var, int height, int width)
     while (i < width)
   	{
 		 str = ft_split(str2[y], ' ');
-		
 		 var->map[y][i] = str[i][0] - '0';
-			
+		 if (var->map[y][i] == 6)
+			var->spriteNum++; 		
     i++;
   	}
   i = 0;
@@ -929,6 +1185,7 @@ void getMapFromParamFile(var_t *var)
 	var->m_width = getMapWidth(var, index);
 	var->m_height = getMapHeight(var, index);
 	duplicate_map(var, var->m_height, var->m_width);
+	initSpriteQueue(var);
 	//ft_putnbr(var->map[21][12]);
 }
 
