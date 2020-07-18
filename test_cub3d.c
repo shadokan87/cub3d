@@ -113,6 +113,7 @@ typedef struct var_s
 	int drawEndY;
 	int texX;
 	int texY;
+	int *spriteorder;
 	//
 	char	*addr;
 	void	*mlx_ptr;
@@ -478,78 +479,76 @@ double	*getDist(var_t *var)
 	int i;
 	double *dist;
 	double swap;
+	int swap2;
 
 	dist = (double *)malloc(sizeof(double) * var->spriteNum);
+	var->spriteorder = malloc(sizeof(int) * var->spriteNum);
 	i = 0;
 	while (i < var->spriteNum)
 	{
 		dist[i] = ((var->posX - var->spriteQueue[i][0]) *
 		(var->posX - var->spriteQueue[i][0])
 		+ (var->posY - var->spriteQueue[i][1])
-		* var->posY - var->spriteQueue[i][1]);
+		* (var->posY - var->spriteQueue[i][1]));
+		var->spriteorder[i] = i;
 		i++;
+	}
+	i = 1;
+	while (i < var->spriteNum)
+	{
+		if (dist[i - 1] < dist[i])
+		{
+			swap = dist[i - 1];
+			dist[i - 1] = dist[i];
+			dist[i] = swap;
+			swap2 = var->spriteorder[i - 1];
+			var->spriteorder[i - 1] = var->spriteorder[i];
+			var->spriteorder[i] = swap2;
+			i = 1;
+ 		}
+		 else
+		 i++;
 	}
 	return (dist);
 }
 
-void	swapQ(var_t *var)
-{
-	int i;
-	int y;
-	int swap2;
-	int swap3;
-	double swap;
+// void	swapQ(var_t *var)
+// {
+// 	int i;
+// 	int y;
+// 	int swap2;
+// 	int swap3;
+// 	double swap;
 
-	i = 1;
-	y = i;
-	while (i < var->spriteNum)
-	{
-		if (var->dist[i] > var->dist[i - 1])
-		{
-			//printf("test");
-			swap = var->dist[i - 1];
-			var->dist[i - 1] = var->dist[i];
-			var->dist[i] = swap;
-			i = 1;
- 		}
-		else
-		i++;
-	}
-}
+// 	i = 1;
+// 	y = i + 1;
+// 	while (i < var->spriteNum)
+// 	{
+// 		if (var->dist[i] > var->dist[i - 1])
+// 		{
+// 			//printf("test");
+// 			swap = var->dist[i - 1];
+// 			var->dist[i - 1] = var->dist[i];
+// 			var->dist[i] = swap;
+// 			swap2 = var->queue[y - 2];
+// 			var->queue[y - 2] = var->queue[y];
+// 			var->queue[y] = swap2;
+// 			y++;
+// 			swap2 = var->queue[y - 2];
+// 			var->queue[y - 2] = var->queue[y];
+// 			var->queue[y] = swap2;
+// 			i = 1;
+// 			y = i + 1;
+//  		}
+// 		else
+// 		i++;
+// 		y = i + 3;
+// 	}
+// }
 
 int	**sortQueue(var_t *var)
 {
-	int i;
-	int y;
-	int swap;
-
 	var->dist = getDist(var);
-	var->queue = malloc(sizeof(int) * var->spriteNum * 2 + 1);
-	i = 0;
-	y = 0;
-	while (i < var->spriteNum)
-	{
-		var->queue[y] = var->spriteQueue[i][0];
-		var->queue[y + 1] = var->spriteQueue[i][1];
-		y+=2;
-		i++;
-	}
-	var->queue[y] = -9;
-	i = 0;
-	swapQ(var);
-	printf("START\n");
-	while (var->queue[i] != -9)
-	{
-		printf("%d, \n", var->queue[i]);
-		i++;
-	}
-	// printf("\n");
-	// while (i < var->spriteNum)
-	// {
-	// 	printf("%f, ", dist[i]);
-	// 	i++;
-	// }
-	// printf("\n");
 }
 
 void	draw_sprite(var_t *var, int sx, int sy)
@@ -768,6 +767,7 @@ void	raycast(var_t *var)
 {
 	//ray
 	var->x = 0;
+	int i = 0;
 	while (var->x < var->s_w)
 	{
 		var->cameraX = 2 * var->x / (double)var->s_w - 1;
@@ -1030,7 +1030,6 @@ int		run(var_t *var)
 	int t_bpp;
 	int t_line;
 	int i = 0;
-	int **queue = sortQueue(var);
 
 	var->tex_h = 64;
 	var->tex_w = 64;
@@ -1040,7 +1039,16 @@ int		run(var_t *var)
 	|| var->R_R || var->L_R)
 		cls(var);
 	raycast(var);
-	sortQueue(var);
+	//sortQueue(var);
+	while (i < var->spriteNum)
+	{
+		var->dist = getDist(var);
+		//printf("%f |%f| |%f|, ", var->dist[i], var->posX, var->posY);
+		draw_sprite(var, var->spriteQueue[var->spriteorder[i]][0], var->spriteQueue[var->spriteorder[i]][1]);
+		i++;
+	}
+	printf("\n");
+		
 	//draw_sprite(var);
 	mlx_put_image_to_window(var->mlx_ptr, var->mlx_win, var->img, 0, 0);
 }
