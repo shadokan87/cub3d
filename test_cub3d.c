@@ -158,7 +158,6 @@ char *Remove_extraSpaces(char *str)
 
 int	getMapIndex(var_t *var)
 {
-	char toSearch[3] = "1 1";
 	int i;
 	int j;
 	
@@ -167,6 +166,8 @@ int	getMapIndex(var_t *var)
 	while (var->paramFile && var->paramFile[i])
 	{
 		if (var->paramFile[i] == '1' && var->paramFile[i + 1] == ' ' && var->paramFile[i + 2] == '1')
+			return (1);
+		else if (var->paramFile[i] == 'W' && var->paramFile[i + 1] == ' ' && var->paramFile[i + 2] == 'W')
 			return (i);
 		i++;
 	}
