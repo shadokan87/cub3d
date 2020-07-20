@@ -38,6 +38,7 @@ typedef struct var_s
 	int mapY;
 	int stepX;
 	int stepY;
+	int hcount;
 	int hit;
 	int wallx;
 	int ompx;
@@ -166,7 +167,7 @@ int	getMapIndex(var_t *var)
 	while (var->paramFile && var->paramFile[i])
 	{
 		if (var->paramFile[i] == '1' && var->paramFile[i + 1] == ' ' && var->paramFile[i + 2] == '1')
-			return (1);
+			return (i);
 		else if (var->paramFile[i] == 'W' && var->paramFile[i + 1] == ' ' && var->paramFile[i + 2] == 'W')
 			return (i);
 		i++;
@@ -1095,9 +1096,11 @@ int	**copyMap(int height, int width, int index, var_t *var)
 int getMapHeight(var_t *var, int i)
 {
 	int height;
-	char **count = ft_split(&var->paramFile[i], '\n');
+	char **count = ft_split(var->paramFile, '\n');
+	count += i;
 
 	height = 0;
+	printf("-->%d\n", var->hcount);
 	while (count[height] != NULL)
 	{
 		height++;
@@ -1188,11 +1191,56 @@ void duplicate_map(var_t *var, int height, int width)
   }
 }
 
+int	skip(char ***split)
+{
+	char *str = **split;
+	if (str[0] == 'R' || str[0] == 'F'
+	|| str[0] == 'C' || str[0] == 'S')
+		return (1);
+	if ((str[0] == 'S' && str[1] == 'O')
+	|| (str[0] == 'N' && str[1] == 'O')
+	|| (str[0] == 'W' && str[1] == 'E')
+	|| (str[0] == 'E' && str[1] == 'A'))
+		return (1);
+	return (0);
+}
+
+char	**getMapStr(var_t *var)
+{
+	int width;
+	char *str;
+	char **split;
+	char *ptr;
+	int i;
+	int z;
+
+	str = ft_strdup(var->paramFile);
+	split = ft_split(str, '\n');
+	width = 0;
+	z = 0;
+	ptr = *split;
+	var->hcount = 0;
+	while (skip(&split))
+	{
+		var->hcount++;
+		free(*split);
+		split++;
+	}
+	return (split);
+}
+
 void getMapFromParamFile(var_t *var)
 {
 	int index = getMapIndex(var);
-	var->m_width = getMapWidth(var, index);
-	var->m_height = getMapHeight(var, index);
+	char **str = getMapStr(var);
+	//printf("%s", *str);
+	int i = 0;
+	int height = 7;
+	while (str[i])
+	i++;
+	var->m_width = ft_strlen(str[0]) / 2;
+	var->m_height = getMapHeight(var, var->hcount);
+	printf("-->%d",var->m_height);
 	duplicate_map(var, var->m_height, var->m_width);
 	initSpriteQueue(var);
 	//ft_putnbr(var->map[21][12]);
