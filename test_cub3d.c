@@ -38,7 +38,6 @@ typedef struct var_s
 	int mapY;
 	int stepX;
 	int stepY;
-	int hcount;
 	int hit;
 	int wallx;
 	int ompx;
@@ -1096,11 +1095,9 @@ int	**copyMap(int height, int width, int index, var_t *var)
 int getMapHeight(var_t *var, int i)
 {
 	int height;
-	char **count = ft_split(var->paramFile, '\n');
-	count += i;
+	char **count = ft_split(&var->paramFile[i], '\n');
 
 	height = 0;
-	printf("-->%d\n", var->hcount);
 	while (count[height] != NULL)
 	{
 		height++;
@@ -1219,13 +1216,12 @@ char	**getMapStr(var_t *var)
 	width = 0;
 	z = 0;
 	ptr = *split;
-	var->hcount = 0;
 	while (skip(&split))
 	{
-		var->hcount++;
 		free(*split);
 		split++;
 	}
+		
 	return (split);
 }
 
@@ -1235,12 +1231,8 @@ void getMapFromParamFile(var_t *var)
 	char **str = getMapStr(var);
 	//printf("%s", *str);
 	int i = 0;
-	int height = 7;
-	while (str[i])
-	i++;
-	var->m_width = ft_strlen(str[0]) / 2;
-	var->m_height = getMapHeight(var, var->hcount);
-	printf("-->%d",var->m_height);
+	var->m_width = getMapWidth(var, index);
+	var->m_height = getMapHeight(var, index);
 	duplicate_map(var, var->m_height, var->m_width);
 	initSpriteQueue(var);
 	//ft_putnbr(var->map[21][12]);
