@@ -156,6 +156,21 @@ char *Remove_extraSpaces(char *str)
     return (return_value);
 }
 
+int	isWall(char c)
+{
+	if (c == '4')
+		return (1);
+	else if (c == '5')
+		return (5);
+	else if (c == '3')
+		return (3);
+	else if (c == '2')
+		return (2);
+	else if (c == '1')
+		return (1);
+	return (0);
+}
+
 int	getMapIndex(var_t *var)
 {
 	int i;
@@ -165,9 +180,7 @@ int	getMapIndex(var_t *var)
 	j = 0;
 	while (var->paramFile && var->paramFile[i])
 	{
-		if (var->paramFile[i] == '1' && var->paramFile[i + 1] == ' ' && var->paramFile[i + 2] == '1')
-			return (i);
-		else if (var->paramFile[i] == 'W' && var->paramFile[i + 1] == ' ' && var->paramFile[i + 2] == 'W')
+		if (isWall(var->paramFile[i]) && var->paramFile[i + 1] == ' ' && isWall(var->paramFile[i + 2]))
 			return (i);
 		i++;
 	}
@@ -181,9 +194,26 @@ int     ft_tolower(int c)
         return (c);
 }
 
+int	NoSpaceGetMapIndex(char *str)
+{
+	int i;
+	int j;
+	
+	i = 0;
+	j = 0;
+	while (str && str[i])
+	{
+		if (isWall(str[i]) && isWall(str[i + 2]) && isWall(str[i + 3]))
+			return (1);
+		i++;
+	}
+	return (-1);
+}
+
 char *removeS(char *str, var_t *var)
 {
 	int i = 0;
+
 	while (str[i])
 	{
 		if (getMapIndex(var) != -1)
@@ -270,22 +300,6 @@ if (ft_strcmp(var->ParamSliced[i], "r"))
             var->s_w = ft_atoi(var->ParamSliced[i + 1]);
             var->s_h = ft_atoi(var->ParamSliced[i + 2]);
         }
-        // if (ft_strcmp(var->ParamSliced[i], "no"))
-        //     var->text_paths[2] = ft_strdup(var->ParamSliced[i + 1]);
-        // if (ft_strcmp(var->ParamSliced[i], "so"))
-        //     var->text_paths[3] = ft_strdup(var->ParamSliced[i + 1]);
-        // if (ft_strcmp(var->ParamSliced[i], "we"))
-        //     var->text_paths[4] = ft_strdup(var->ParamSliced[i + 1]);
-        // if (ft_strcmp(var->ParamSliced[i], "ea"))
-        //     var->text_paths[5] = ft_strdup(var->ParamSliced[i + 1]);
-        // if (ft_strcmp(var->ParamSliced[i], "s"))
-        //     var->text_paths[6] = ft_strdup(var->ParamSliced[i + 1]);
-        // if (ft_strcmp(var->ParamSliced[i], "f") || ft_strcmp(var->ParamSliced[i], "c"))
-        //     fill_color(var, i);
-		// else if (i <= 8 &&i != 7)
-		// 	var->text_paths[i] = NULL;
-        // i++;
-
         if (ft_strcmp(var->ParamSliced[i], "R"))
         {
             var->s_w = ft_atoi(var->ParamSliced[i + 1]);
@@ -347,14 +361,11 @@ void	init_raycast(var_t *var)
 	var->s_h = var->s_h;
 	var->img = mlx_new_image(var->mlx_ptr, var->s_w, var->s_h);
 	var->addr = mlx_get_data_addr(var->img, &var->bpp, &var->line, &var->endian);
-	var->posX = 2;
-	var->posY = 1;
 	var->dirX = -1;
 	var->dirY = 0;
 	var->planeX = 0;
 	var->planeY = 0.66;
 	var->time = 0;
-
 }
 
 void	step(var_t *var)
@@ -1092,31 +1103,109 @@ int	**copyMap(int height, int width, int index, var_t *var)
 	return (map);
 }
 
-int getMapHeight(var_t *var, int i)
+int	spaceCount(char *str)
 {
-	int height;
-	char **count = ft_split(&var->paramFile[i], '\n');
+	int i;
 
-	height = 0;
-	while (count[height] != NULL)
-	{
-		height++;
-	}
-	return (height);
+	i = 0;
+	while (str[i] == ' ')
+		i++;
+	return (i);
 }
 
-int	getMapWidth(var_t *var, int i)
+void	checkLine(char *str, int y)
+{
+	int i;
+
+	i = 0;
+	while (str[i] && i <= y)
+	{
+		if (str[i] == ' ')
+			i++;
+		if (!isWall(str[i]))
+			{
+				ft_printf("MAP_NOT_CLOSED");
+				exit (0);
+			}
+		i++;
+	}
+}
+
+int *init_to_fill(var_t *var)
+{
+	int *to_fill;
+	int i;
+
+	i = 0;
+	if (!(to_fill = malloc(sizeof(int) * var->m_width)))
+		return (0);
+	while (i < var->m_width)
+	{
+		to_fill[i] = -1;
+		i++;
+	}
+	return (to_fill);
+}
+
+int getMapHeight(char **str)
+{
+	int height;
+	int i;
+	int y;
+
+	i = 0;
+	y = 0;
+	height = 0;
+	while (str[i])
+	{
+		if (i > 0 && spaceCount(str[i]) < spaceCount(str[i - 1]))
+			checkLine(str[i], spaceCount(str[i - 1]));
+		if (str[i][0] == ' ')
+		{
+			y = 0;
+			while (str[i][y] == ' ')
+				y++;
+			if (!isWall(str[i][y]))
+				{
+					ft_printf("MAP_NOT_CLOSED");
+					exit(0);
+				}
+		}
+		else
+			y = 0;
+		i++;
+	}
+	return (i);
+}
+
+int	getMapWidth(char **str)
 {
 	int width;
+	int i;
+	int big;
+	int index;
+
+	i = 0;
 	width = 0;
-	while (var->paramFile && var->paramFile[i] != '\n')
+	big = ft_strlen(str[i]);
+	index = 0;
+	while (str[i])
 	{
-		while (var->paramFile && var->paramFile [i] == ' ')
-			i++;
+		if (ft_strlen(str[i]) > big)
+		{
+			big = ft_strlen(str[i]);
+			index = i;
+		}			
 		i++;
-		width++;
 	}
-return (width);
+	i = 0;
+	while (str[index][i])
+	{
+		if (!(str[index][i] == ' '))
+			width++;
+		i++;
+	}
+return (width + (spaceCount(str[index]) / 2));
 }
 
 void	initSpriteQueue(var_t *var)
@@ -1154,33 +1243,36 @@ void	initSpriteQueue(var_t *var)
 
 }
 
-void duplicate_map(var_t *var, int height, int width)
+void duplicate_map(var_t *var, char **str2)
 {
 	char **str;
 	char c;
-	char **str2;
 	int i;
 	int y;
 	
 	i = 0;
 	y = 0;
-	var->map = malloc(sizeof(int *) * height);
+	var->map = malloc(sizeof(int *) * var->m_height);
 	var->spriteNum = 0;
-	str2 = ft_split(&var->paramFile[getMapIndex(var)], '\n');
-	while (i < height)
+	while (i < var->m_height)
   	{
-    var->map[i] = malloc(sizeof(int) * width);
+    var->map[i] = malloc(sizeof(int) * var->m_width);
     i++;
   	}
   i = 0;
-  while (y < height)
+  while (y < var->m_height)
   {
-    while (i < width)
+    while (i < var->m_width)
   	{
 		 str = ft_split(str2[y], ' ');
 		 var->map[y][i] = str[i][0] - '0';
 		 if (var->map[y][i] == 6)
-			var->spriteNum++; 		
+			var->spriteNum++;
+		if (var->map[y][i] == 4)
+		{
+			var->posX = y + 1;
+			var->posY = i + 1;
+		}
     i++;
   	}
   i = 0;
@@ -1225,17 +1317,292 @@ char	**getMapStr(var_t *var)
 	return (split);
 }
 
+void checkBottom(char *str)
+{
+	int i;
+	int y;
+	int count;
+
+	i = 0;
+	y = 0;
+	count = 0;
+	if (str[i] && str[i] == ' ')
+	{
+		while (str[i] && str[i] == ' ')
+			i++;
+	}
+	while (str[i])
+	{
+		if (str[i] == ' ')
+			i++;
+		if (!isWall(str[i]))
+			{
+				ft_printf("MAP_NOT_CLOSED");
+				exit(0);
+			}
+		i++;
+	}
+}
+
+void checkTop(char *str)
+{
+	int i;
+	int y;
+	int count;
+
+	i = 0;
+	y = 0;
+	count = 0;
+	if (str[i] && str[i] == ' ')
+	{
+		while (str[i] && str[i] == ' ')
+			i++;
+	}
+	while (str[i])
+	{
+		if (str[i] == ' ')
+			i++;
+		if (!isWall(str[i]))
+			{
+				ft_printf("MAP_NOT_CLOSED");
+				exit (0);
+			}
+		i++;
+	}
+}
+
+int isSymbol(char c)
+{
+	if (c == '4')
+		return (1);
+	else if (c == '5')
+		return (1);
+	else if (c == '6')
+		return (1);
+	else if (c == '2')
+		return (1);
+	else if (c == '1')
+		return (1);
+	else if (c == '3')
+		return (1);
+	else if (c == '0')
+		return (1);
+	return (0);
+}
+
+void	lineIsOk(char *str)
+{
+	int i;
+	
+	i = 0;
+	if (str[i] && str[i] == ' ')
+	{
+		while (str[i] && str[i] == ' ')
+			i++;
+	}
+	if (!isWall(str[i]))
+	{
+		ft_printf("MAP_NOT_CLOSED");
+		exit(0);
+	}	
+	while (str[i])
+	{
+		if (str[i] == ' ')
+			i++;
+		if (!isSymbol(str[i]))
+			{
+				ft_printf("%c MAP_SYMBOL_UNKOWN", str[i]);
+				exit(0);
+			}
+		i++;
+	}
+	if (!isWall(str[i - 1]))
+	{
+		printf("MAP_NOT_CLOSED");
+		exit(0);
+	}
+}
+
+void checkMiddle(char **str)
+{
+	int i;
+	int y;
+
+	i = 0;
+	y = 0;
+	while (str[i + 1])
+	{
+		lineIsOk(str[i]);
+		i++;
+	}
+}
+
+void checkMap(char **str)
+{
+	int i;
+
+	i = 0;
+	checkTop(str[0]);
+	checkMiddle(str);
+	while (str[i])
+		i++;
+	checkBottom(str[i - 1]);
+}
+
+char *rmSpace(char *str)
+{
+	char *ret;
+	int newsize;
+	int i;
+	int y;
+
+	newsize = ft_strlen(str) * 2;
+	ret = malloc(sizeof(char) *  newsize);
+	i = 0;
+	y = 0;
+	while (y < newsize - 1)
+	{
+		if (y % 2 == 0)
+		{
+			ret[y] = str[i] == ' ' ? '1' : str[i];
+			i++;
+		}
+		else
+			ret[y] = ' ';
+		y++;
+	}
+	ret[newsize - 1] = '\0';
+	return (ret);
+}
+
+char *NoRestrict_removeS(char *str)
+{
+	int i = 0;
+
+	while (str[i])
+	{
+			if (str[i] == 'S')
+				str[i] = '3';
+			else if (str[i] == 'N')
+				str[i] = '2';
+			else if (str[i] == 'W')
+				str[i] = '4';
+			else if (str[i] == '2')
+				str[i] = '6';
+			else if (str[i] == 'E')
+				str[i] = '5';	
+		i++;
+	}
+	return (str);
+}
+
+int	containSpace(char *str)
+{
+	int i;
+
+	i = 0;
+	while (str[i] == ' ')
+		i++;
+	if (isWall(str[i]) && isWall(str[i + 1]) && isWall(str[i + 2]))
+		return (1);
+	return (0);
+}
+
+char	**convMap(char **str)
+{
+	int i;
+
+	i = 0;
+	while (str[i])
+	{
+		str[i] = rmSpace(str[i]);
+		str[i] = NoRestrict_removeS(str[i]);
+		ft_printf("%s\n", str[i]);
+		i++;
+	}
+	return (str);
+}
+
+char **convSpace(char **str)
+{
+	int i;
+	int y;
+	int z;
+
+	i = 0;
+	y = 0;
+	z = 0;
+	while (str[i])
+	{
+		z = spaceCount(str[i]);
+		while (z > 0 && y < z)
+		{
+			if (y % 2 == 0)
+				str[i][y] = '1';
+			y++;
+		}
+		y = 0;
+		i++;
+	}
+	return (str);
+}
+
 void getMapFromParamFile(var_t *var)
 {
-	int index = getMapIndex(var);
-	char **str = getMapStr(var);
-	//printf("%s", *str);
-	int i = 0;
-	var->m_width = getMapWidth(var, index);
-	var->m_height = getMapHeight(var, index);
-	duplicate_map(var, var->m_height, var->m_width);
+	int i;
+	int index;
+	char **str;
+	int newsize;
+
+	str = getMapStr(var);
+	index = getMapIndex(var);
+	i = 0;
+	if (containSpace(str[0]))
+		str = convMap(str);
+	//exit(0);
+	checkMap(str);
+	var->m_width = getMapWidth(str);
+	ft_printf("width = %d\n", var->m_width);
+	var->m_height = getMapHeight(str);
+	str = convSpace(str);
+		while (str[i])
+	{
+		printf("%s\n", str[i]);
+		i++;
+	}
+	printf("-->%d", var->m_width);
+	//exit(0);
+	duplicate_map(var, str);
+	if (var->posX == -1 || var->posY == -1)
+		{
+			ft_printf("NO_PLAYER_START");
+			exit(0);
+		}
 	initSpriteQueue(var);
-	//ft_putnbr(var->map[21][12]);
+}
+
+void	checkColor(var_t *var)
+{
+	int i = 0;
+	while (i < 3)
+	{
+		if (!(var->F_color[i] > -1 && var->F_color[i] < 256))
+			{
+				ft_printf("COLOR_ERROR");
+				exit (0);
+			}
+			i++;
+	}
+	i = 0;
+	while (i < 3)
+	{
+		if (!(var->C_color[i] > -1 && var->C_color[i] < 256))
+			{
+				ft_printf("COLOR_ERROR");
+				exit (0);
+			}
+			i++;
+	}
 }
 
 void	init_struct(var_t *var, char **argv)
@@ -1262,12 +1629,15 @@ void	init_struct(var_t *var, char **argv)
     if (!(var->text_paths = malloc(sizeof(char *) * 9)))
         return ;
 	fillLoopParams(var);
+	checkColor(var);
 }
 
 int	main(int argc, char **argv)
 {
 	var_t var;
 
+	var.posX = -1;
+	var.posY = -1;
 	init_struct(&var, argv);
 	if ((var.mlx_ptr = mlx_init()) == NULL)
 		return (EXIT_FAILURE);
