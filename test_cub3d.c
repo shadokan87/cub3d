@@ -10,6 +10,7 @@
 #include <mlx.h>
 #include <math.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #define rotSpeed 0.1
 #define moveSpeed 0.1
@@ -34,6 +35,7 @@ typedef struct var_s
 	double deltaDistY;
 	double perpWallDist;
 	float step;
+	int screenshot;
 	int mapX;
 	int mapY;
 	int stepX;
@@ -123,6 +125,22 @@ typedef struct var_s
 	int o_drawEnd;
 	int o_x;
 }	var_t;
+
+void    *ft_memset(void *b, int c, size_t len)
+{
+        unsigned long   i_array_b;
+        unsigned char   *a;
+
+        i_array_b = 0;
+        a = (unsigned char *)b;
+        while (i_array_b < len)
+        {
+                a[i_array_b] = (unsigned char)c;
+                i_array_b++;
+        }
+        b = a;
+        return (b);
+}
 
 int		rgb_int(int red, int green, int blue)
 {
@@ -1036,6 +1054,11 @@ int	load_text(var_t *var)
 	}
 }
 
+void	screenshot(var_t *var)
+{
+
+}
+
 int		run(var_t *var)
 {
 	int t_endian;
@@ -1059,8 +1082,8 @@ int		run(var_t *var)
 		draw_sprite(var, var->spriteQueue[var->spriteorder[i]][0], var->spriteQueue[var->spriteorder[i]][1]);
 		i++;
 	}
-	printf("\n");
-		
+	if (var->screenshot)
+		screenshot(var);	
 	//draw_sprite(var);
 	mlx_put_image_to_window(var->mlx_ptr, var->mlx_win, var->img, 0, 0);
 }
@@ -1612,9 +1635,14 @@ void	init_struct(var_t *var, char **argv)
     int i = 0;
     int y = 0;
 
+	var->posX = -1;
+	var->posY = -1;
     var->paramFile = NULL;
 	var->ParamSliced = NULL;
-    fd = open(argv[1], O_RDONLY);
+	var->screenshot = 0;
+	if (ft_strcmp(argv[1], "--save"))
+		var->screenshot = 1;
+    fd = open(argv[var->screenshot == 1 ? 2 : 1], O_RDONLY);
     getParamFile(fd, &line, var);
 	getMapFromParamFile(var);
     i = 0;
@@ -1636,8 +1664,11 @@ int	main(int argc, char **argv)
 {
 	var_t var;
 
-	var.posX = -1;
-	var.posY = -1;
+	if (!(argc >= 2 && argc <= 3))
+	{
+		ft_printf("Please use [--save] argument to save the first frame into a bmp file\nfollowed by a .cub map or directly the map to launch the game");
+		exit(0);
+	}
 	init_struct(&var, argv);
 	if ((var.mlx_ptr = mlx_init()) == NULL)
 		return (EXIT_FAILURE);
