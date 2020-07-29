@@ -34,6 +34,7 @@ typedef struct var_s
 	double deltaDistX;
 	double deltaDistY;
 	double perpWallDist;
+	char *hextable[255];
 	float step;
 	int screenshot;
 	int mapX;
@@ -70,6 +71,7 @@ typedef struct var_s
 	int		R_R;
 	void	*img;
 	int t_endian;
+	int **colormap;
 	int t_bpp;
 	int t_line;
 	int	endian;
@@ -341,10 +343,100 @@ if (ft_strcmp(var->ParamSliced[i], "r"))
     }
 } 
 
+int	getred(int rgb, var_t *var)
+{
+	char str[3];
+	char *hex;
+	int i = 0;
+
+	hex = ft_putnbr_base(rgb, HEXD);
+	//printf("%s\n", hex);
+	//exit(0);
+	if (rgb == 0)
+		return (0);
+	str[0] = hex[0];
+	str[1] = hex[1];
+	str[2] = '\0';
+	if (str[0] == '0' && str[1] == '0')
+		str[1] = '\0';
+	while (i < 255)
+	{
+		if (ft_strcmp(var->hextable[i], str))
+		{
+			//ft_printf("HEX : %s STR : %s", var->hextable[i], str);
+			return (i);
+		}
+			
+		i++;
+	}
+	return (255);
+}
+
+int	getblue(int rgb, var_t *var)
+{
+	char str[3];
+	char *hex;
+	int i = 0;
+
+	hex = ft_putnbr_base(rgb, HEXD);
+	if (rgb == 0)
+		return (0);
+	str[0] = hex[4];
+	str[1] = hex[5];
+	str[2] = '\0';
+	if (str[0] == '0' && str[1] == '0')
+		str[1] = '\0';
+	while (i < 255)
+	{
+		if (ft_strcmp(var->hextable[i], str))
+			return (i);
+		i++;
+	}
+	return (255);
+}
+
+int	getgreen(int rgb, var_t *var)
+{
+	char str[3];
+	char *hex;
+	int i = 0;
+
+	hex = ft_putnbr_base(rgb, HEXD);
+	if (rgb == 0)
+		return (0);
+	str[0] = hex[2];
+	str[1] = hex[3];
+	str[2] = '\0';
+	if (str[0] == '0' && str[1] == '0')
+		str[1] = '\0';
+	while (i < 255)
+	{
+		if (ft_strcmp(var->hextable[i], str))
+			return (i);
+		i++;
+	}
+	return (255);
+}
+
+void	pixel_put_fd(var_t *var, int color, FILE * outfile)
+{
+	int blue;
+	int green;
+	int red;
+
+	red = getred(color, var);
+	blue = getblue(color, var);
+	green = getgreen(color, var);
+	  fprintf(outfile, "%c", blue);
+      fprintf(outfile, "%c", green);
+      fprintf(outfile, "%c",red);
+}
+
 void	pixel_put(var_t *var, int x, int y, int color)
 {
 	char *dst;
 
+	
 	dst = var->addr + (y * var->line + x * (var->bpp / 8));
 	*(unsigned int*)dst = color;
 }
@@ -784,10 +876,51 @@ void	draw_texture(var_t *var)
 
 }
 
+int	convHex(char *hex)
+{
+	int i;
+
+	i = 0;
+	while (!(ft_strcmp(hex, ft_putnbr_base(i, HEXD))))
+		{
+			if (i > 255)
+			{
+				return (255);
+			}
+			i++;
+		}
+	//printf("ret = %d\n", i);
+	return (i);
+}
+
+int *splitrgb(char *hex)
+{
+	char *str;
+	int *ret;
+	int i = 0;
+	ret = malloc(sizeof(int) * 3);
+	str = ft_strdup(hex);
+	str[2] = '\0';
+	ret[0] = convHex(str);
+	ret[1] = 0;
+	ret[2] = 0;
+	
+	// while (i < 3)
+	// {
+	// 	printf("%d ", ret[i]);
+	// 	i++;
+	// }
+	// printf("\n");
+	// printf("%s\n", hex);
+	//printf("%d %s %s\n", ret[1], str, hex);
+	return (ret);
+}
+
 void	draw(var_t *var)
 {
 	draw_info(var);
 	var->color = rgb_int(185, 94, 255);
+	//splitrgb(ft_putnbr_base(var->color, HEXD));
 	if (var->side == 1)
 		var->color = var->color / 2;
 		verline(var, var->x, var->drawStart, var->drawEnd, var->color);
@@ -1054,20 +1187,7 @@ int	load_text(var_t *var)
 	}
 }
 
-static int
-	get_color(var_t *var, int x, int y)
-{
-	int	rgb;
-	int	color;
-
-	color = *(int*)(var->mlx_ptr
-			+ (4 * (int)var->s_w * ((int)var->s_h - 1 - y))
-			+ (4 * x));
-	rgb = (color & 0xFF0000) | (color & 0x00FF00) | (color & 0x0000FF);
-	return (rgb);
-}
-
-void drawbmp (char * filename) {
+void drawbmp (char *filename, var_t *var) {
 
 unsigned int headers[13];
 FILE * outfile;
@@ -1075,10 +1195,11 @@ int extrabytes;
 int paddedsize;
 int x; int y; int n;
 int red, green, blue;
-int WIDTH = 600;
-int HEIGHT = 800;
+int fd = open(filename, O_TRUNC | O_WRONLY | O_APPEND | O_CREAT);
+int WIDTH = var->s_w;
+int HEIGHT = var->s_h;
 
-extrabytes = 4 - ((WIDTH * 3) % 4);                 // How many bytes of padding to add to each
+extrabytes = 4 - ((WIDTH * 3) % 4) % 4;                 // How many bytes of padding to add to each
                                                     // horizontal line - the size of which must
                                                     // be a multiple of 4 bytes.
 if (extrabytes == 4)
@@ -1107,7 +1228,7 @@ headers[10] = 0;                    // biYPelsPerMeter
 headers[11] = 0;                    // biClrUsed
 headers[12] = 0;                    // biClrImportant
 
-outfile = fopen(filename, "wb");
+outfile = fdopen(fd, "w");
 
 //
 // Headers begin...
@@ -1142,28 +1263,40 @@ for (n = 7; n <= 12; n++)
 //
 // Headers done, now write the data...
 //
-
+int rgb;
+int color;
+int *ret;
+char *str;
+char *dst;
 for (y = HEIGHT - 1; y >= 0; y--)     // BMP image format is written from bottom to top...
 {
    for (x = 0; x <= WIDTH - 1; x++)
    {
-
-    //   red = reduce(redcount[x][y] + COLOUR_OFFSET) * red_multiplier;
-    //   green = reduce(greencount[x][y] + COLOUR_OFFSET) * green_multiplier;
-    //   blue = reduce(bluecount[x][y] + COLOUR_OFFSET) * blue_multiplier;
-	red = 0;
-	green = 0;
-	blue = 255;
-
+// 	   color = *(int*)(var->mlx_ptr
+// 			+ (4 * (int)var->s_w * ((int)var->s_h - 1 - y))
+// 			+ (4 * x));
+dst =  var->addr + (y * var->line + x * (var->bpp / 8));;
+color = *(unsigned int*)dst;
+	   rgb = color;
+	   //ret[0] = 255;
+		// red = ret[0];
+		// green = ret[1];
+		// blue = ret[2];
+		str = ft_putnbr_base(rgb, HEXD);
+		red = 255;
+		blue= 0;
+		green = 0;
       if (red > 255) red = 255; if (red < 0) red = 0;
       if (green > 255) green = 255; if (green < 0) green = 0;
       if (blue > 255) blue = 255; if (blue < 0) blue = 0;
 
       // Also, it's written in (b,g,r) format...
+	//   write(fd, &rgb, 3);
 
-      fprintf(outfile, "%c", blue);
-      fprintf(outfile, "%c", green);
-      fprintf(outfile, "%c", red);
+	pixel_put_fd(var, color, outfile);
+    //   fprintf(outfile, "%c", blue);
+    //   fprintf(outfile, "%c", green);
+    //   fprintf(outfile, "%c",red);
    }
    if (extrabytes)      // See above - BMP lines must be of lengths divisible by 4.
    {
@@ -1180,7 +1313,18 @@ return;
 
 int	screenshot(var_t *var)
 {
-	drawbmp("test.bmp");	
+	int i;
+
+	i = 0;
+	raycast(var);
+	while (i < var->spriteNum)
+	{
+		var->dist = getDist(var);
+		//printf("%f |%f| |%f|, ", var->dist[i], var->posX, var->posY);
+		draw_sprite(var, var->spriteQueue[var->spriteorder[i]][0], var->spriteQueue[var->spriteorder[i]][1]);
+		i++;
+	}	
+	drawbmp("screenshot.bmp",var);
 	exit(0);
 	return (1);
 }
@@ -1195,6 +1339,8 @@ int		run(var_t *var)
 	var->tex_h = 64;
 	var->tex_w = 64;
 	var->img_data = (int *)mlx_get_data_addr(var->img, &var->t_bpp, &var->t_line, &var->t_endian);
+	if (var->screenshot)
+		screenshot(var);
 	listen_keys(var);
 	if (var->S || var->W || var->D || var->A
 	|| var->R_R || var->L_R)
@@ -1207,9 +1353,7 @@ int		run(var_t *var)
 		//printf("%f |%f| |%f|, ", var->dist[i], var->posX, var->posY);
 		draw_sprite(var, var->spriteQueue[var->spriteorder[i]][0], var->spriteQueue[var->spriteorder[i]][1]);
 		i++;
-	}
-	if (var->screenshot)
-		screenshot(var);	
+	}	
 	//draw_sprite(var);
 	mlx_put_image_to_window(var->mlx_ptr, var->mlx_win, var->img, 0, 0);
 }
@@ -1419,7 +1563,7 @@ void duplicate_map(var_t *var, char **str2)
 			var->spriteNum++;
 		if (var->map[y][i] == 4)
 		{
-			var->posX = y + 1;
+			var->posX = y + 1.5;
 			var->posY = i + 1;
 		}
     i++;
@@ -1719,7 +1863,7 @@ void getMapFromParamFile(var_t *var)
 		printf("%s\n", str[i]);
 		i++;
 	}
-	printf("-->%d", var->m_width);
+	//printf("-->%d", var->m_width);
 	//exit(0);
 	duplicate_map(var, str);
 	if (var->posX == -1 || var->posY == -1)
@@ -1754,6 +1898,34 @@ void	checkColor(var_t *var)
 	}
 }
 
+void	inithextable(var_t *var)
+{
+	int i;
+
+	i = 0;
+	while (i < 255)
+	{
+		var->hextable[i] = ft_putnbr_base(i, HEXD);
+		ft_printf("%s |%d|\n", var->hextable[i]);
+		i++;
+	}
+	var->hextable[254] = ft_putnbr_base(255, HEXD);
+	ft_printf("%s |%d|\n", var->hextable[254]);
+}
+
+void	initcolormap(var_t *var)
+{
+	int i;
+
+	i = 0;
+	var->colormap = malloc(sizeof(int *) * var->m_height);
+	while (i < var->m_height)
+  	{
+    var->colormap[i] = malloc(sizeof(int) * var->m_width);
+    i++;
+  	}
+}
+
 void	init_struct(var_t *var, char **argv)
 {
 	int fd;
@@ -1761,6 +1933,7 @@ void	init_struct(var_t *var, char **argv)
     int i = 0;
     int y = 0;
 
+	inithextable(var);
 	var->posX = -1;
 	var->posY = -1;
     var->paramFile = NULL;
@@ -1771,6 +1944,7 @@ void	init_struct(var_t *var, char **argv)
     fd = open(argv[var->screenshot == 1 ? 2 : 1], O_RDONLY);
     getParamFile(fd, &line, var);
 	getMapFromParamFile(var);
+	initcolormap(var);
     i = 0;
     while (var->paramFile[i])
     {
@@ -1798,6 +1972,10 @@ int	main(int argc, char **argv)
 	init_struct(&var, argv);
 	if ((var.mlx_ptr = mlx_init()) == NULL)
 		return (EXIT_FAILURE);
+	if (var.s_w > 1914)
+		var.s_w = 1914;
+	if (var.s_h > 924)
+		var.s_h = 924;
 	if ((var.mlx_win = mlx_new_window(var.mlx_ptr, var.s_w, var.s_h, "cub3d")) == NULL)
 	return (EXIT_FAILURE);
 	init_raycast(&var);
