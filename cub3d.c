@@ -448,8 +448,8 @@ int	**sortQueue(var_t *var)
 
 void	draw_sprite(var_t *var, int sx, int sy)
 {
-	int x;
-	int y;
+		int x;
+		int y;
 	double vMove = 0.0;
 	double spriteX = sx - var->posX;
 	double spriteY = sy - var->posY;
@@ -1474,7 +1474,7 @@ void	initcolormap(var_t *var)
   	}
 }
 
-void	init_struct(var_t *var, char **argv)
+void	init_struct(var_t *var, sprite_t *sprite, char **argv)
 {
 	int fd;
     char *line;
@@ -1490,6 +1490,7 @@ void	init_struct(var_t *var, char **argv)
 	var->mlx_win = NULL;
 	var->mlx_ptr = NULL;
 	var->addr = NULL;
+	var->spriteVar = &sprite->x;
 	if (ft_strcmp(argv[1], "--save"))
 		var->screenshot = 1;
     fd = open(argv[var->screenshot == 1 ? 2 : 1], O_RDONLY);
@@ -1514,13 +1515,14 @@ void	init_struct(var_t *var, char **argv)
 int	main(int argc, char **argv)
 {
 	var_t var;
+	sprite_t sprite;
 
 	if (!(argc >= 2 && argc <= 3))
 	{
 		ft_fprintf(1, "Please use [--save] argument to save the first frame into a bmp file\nfollowed by a .cub file or directly the .cub file to launch the game");
 		exit(0);
 	}
-	init_struct(&var, argv);
+	init_struct(&var, &sprite, argv);
 	if ((var.mlx_ptr = mlx_init()) == NULL)
 		return (EXIT_FAILURE);
 	if (var.s_w > 1914)

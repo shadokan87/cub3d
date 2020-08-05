@@ -105,6 +105,13 @@ typedef struct var_s
 	int	o_drawStart;
 	int o_drawEnd;
 	int o_x;
+	void *spriteVar;
 }	var_t;
+
+typedef struct sprite_s
+{
+	int x;
+	int y;
+}	sprite_t;
 
 #endif
