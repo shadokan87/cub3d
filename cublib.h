@@ -1,20 +1,19 @@
 #ifndef CUBLIB_H
 # define CUBLIB_H
 
-#include <string.h>
+# include <string.h>
 
-#include <unistd.h>
-#include <stdlib.h>
-#include "gnl_working/get_next_line.h"
-//#include "libft/libft.h"
-#include "printf/lprintf.h"
-#include <mlx.h>
-#include <math.h>
-#include <unistd.h>
-#include <stdint.h>
+# include <unistd.h>
+# include <stdlib.h>
+# include "gnl_working/get_next_line.h"
+# include "ft_fprintf/lprintf.h"
+# include <mlx.h>
+# include <math.h>
+# include <unistd.h>
+# include <stdint.h>
 
-#define rotSpeed 0.1
-#define moveSpeed 0.1
+# define rotSpeed 0.1
+# define moveSpeed 0.1
 
 typedef struct var_s
 {
@@ -84,7 +83,6 @@ typedef struct var_s
 	int	s_w;
 	int m_width;
 	int m_height;
-	//
 	char **text_paths;
 	int **loaded_text;
 	int **loaded_addr;
@@ -92,10 +90,6 @@ typedef struct var_s
     int F_color[3];
     int C_color[3];
     char **ParamSliced;
-
-	//
-
-	//
 	double zBuffer[10000];
 	int y;
 	int spriteNum;
@@ -103,23 +97,7 @@ typedef struct var_s
 	int *sY;
 	double spriteX;
 	double spriteY;
-	double sprite;
-	double s_dirX;
-	double s_dirY;
-	double invd;
-	double transformX;
-	double transformY;
-	int spriteScreenX;
-	int spriteWidth;
-	int spriteHeight;
-	int drawStartX;
-	int drawEndX;
-	int drawStartY;
-	int drawEndY;
-	int texX;
-	int texY;
 	int *spriteorder;
-	//
 	char	*addr;
 	void	*mlx_ptr;
     void	*mlx_win;
@@ -128,3 +106,5 @@ typedef struct var_s
 	int o_drawEnd;
 	int o_x;
 }	var_t;
+
+#endif

@@ -1,132 +1,21 @@
+#include "cublib.h"
 
-#include <stdio.h>
-#include <string.h>
-
-#include <unistd.h>
-#include <stdlib.h>
-#include "gnl_working/get_next_line.h"
-//#include "libft/libft.h"
-#include "printf/lprintf.h"
-#include <mlx.h>
-#include <math.h>
-#include <unistd.h>
-#include <stdint.h>
-
-#define rotSpeed 0.1
-#define moveSpeed 0.1
-
-typedef struct var_s
+void	closeGame(var_t *var, char *message)
 {
-	//var
-	double posX;
-	double posY;
-	double dirX;
-	double dirY;
-	double planeX;
-	double planeY;
-	double time;
-	double oldTime;
-	double cameraX;
-	double rayDirX;
-	double rayDirY;
-	double sideDistX;
-	double sideDistY;
-	double deltaDistX;
-	double deltaDistY;
-	double perpWallDist;
-	char *hextable[255];
-	float step;
-	int screenshot;
-	int mapX;
-	int mapY;
-	int stepX;
-	int stepY;
-	int hit;
-	int wallx;
-	int ompx;
-	int ompy;
-	int tex_y;
-	int texpos;
-	int tex_x;
-	int tex_h;
-	int tex_w;
-	int **spriteQueue;
-	int *queue;
-	double *dist;
-	void *t_img;
-	int *t_addr;
-	int spriteHit;
-	int side;
-	int lineHeight;
-	int drawStart;
-	int drawEnd;
-	int *img_data;
-	int color;
-	int		ESC;
-	int		W;
-	int		A;
-	int		S;
-	int		D;
-	int		L_R;
-	int		R_R;
-	void	*img;
-	int t_endian;
-	int **colormap;
-	int t_bpp;
-	int t_line;
-	int	endian;
-	int	bpp;
-	int	line;
-	int	offset;
-	int	x;
-	int	s_h;
-	int	s_w;
-	int m_width;
-	int m_height;
-	//
-	char **text_paths;
-	int **loaded_text;
-	int **loaded_addr;
-    char *paramFile;
-    int F_color[3];
-    int C_color[3];
-    char **ParamSliced;
-	
-	//
+	int i;
 
-	//
-	double zBuffer[10000];
-	int y;
-	int spriteNum;
-	int *sX;
-	int *sY;
-	double spriteX;
-	double spriteY;
-	double sprite;
-	double s_dirX;
-	double s_dirY;
-	double invd;
-	double transformX;
-	double transformY;
-	int spriteScreenX;
-	int spriteWidth;
-	int spriteHeight;
-	int drawStartX;
-	int drawEndX;
-	int drawStartY;
-	int drawEndY;
-	int texX;
-	int texY;
-	int *spriteorder;
-	//
-	char	*addr;
-	void	*mlx_ptr;
-    void	*mlx_win;
-	int **map;
-	int	o_drawStart;
-	int o_drawEnd;
-	int o_x;
-}	var_t;
+	i = -1;
+	if (var->mlx_ptr)
+		free(var->mlx_ptr);
+	if (var->mlx_win)
+		free(var->mlx_win);
+	if (var->addr)
+		free(var->addr);
+	while (++i < var->spriteNum && var->spriteQueue)
+		var->spriteQueue[i] ? free(var->spriteQueue[i]) : 0;
+	message ? ft_fprintf(1, message) : 0;
+	exit(0);
+}
 
 void    *ft_memset(void *b, int c, size_t len)
 {
@@ -248,8 +137,7 @@ char *removeS(char *str, var_t *var)
 				str[i] = '6';
 			else if (str[i] == 'E')
 				str[i] = '5';
-		}
-		//str[i] = ft_tolower(str[i]);		
+		}	
 		i++;
 	}
 	return (str);
@@ -262,7 +150,6 @@ void    getParamFile(int fd, char **line, var_t *var)
 	char *to_free;
 	char *str;
 
-//ft_printf("-->%d\n", (int)'s');
     ret = 0;
 	i = 0;
     while ((ret = get_next_line(fd, line)) > 0)
@@ -350,8 +237,6 @@ int	getred(int rgb, var_t *var)
 	int i = 0;
 
 	hex = ft_putnbr_base(rgb, HEXD);
-	//printf("%s\n", hex);
-	//exit(0);
 	if (rgb == 0)
 		return (0);
 	str[0] = hex[0];
@@ -362,10 +247,7 @@ int	getred(int rgb, var_t *var)
 	while (i < 255)
 	{
 		if (ft_strcmp(var->hextable[i], str))
-		{
-			//ft_printf("HEX : %s STR : %s", var->hextable[i], str);
 			return (i);
-		}
 			
 		i++;
 	}
@@ -418,7 +300,7 @@ int	getgreen(int rgb, var_t *var)
 	return (255);
 }
 
-void	pixel_put_fd(var_t *var, int color, FILE * outfile)
+void	pixel_put_fd(var_t *var, int color, int fd)
 {
 	int blue;
 	int green;
@@ -427,16 +309,27 @@ void	pixel_put_fd(var_t *var, int color, FILE * outfile)
 	red = getred(color, var);
 	blue = getblue(color, var);
 	green = getgreen(color, var);
-	  fprintf(outfile, "%c", blue);
-      fprintf(outfile, "%c", green);
-      fprintf(outfile, "%c",red);
+	if (red > 255)
+		red = 255;
+	if (red < 0)
+		red = 0;
+	if (green > 255)
+		green = 255;
+	if (green < 0)
+		green = 0;
+    if (blue > 255)
+		blue = 255;
+	if (blue < 0)
+		blue = 0;
+	ft_fprintf(fd, "%c", blue);
+	ft_fprintf(fd, "%c", green);
+	ft_fprintf(fd, "%c", red);
 }
 
 void	pixel_put(var_t *var, int x, int y, int color)
 {
 	char *dst;
 
-	
 	dst = var->addr + (y * var->line + x * (var->bpp / 8));
 	*(unsigned int*)dst = color;
 }
@@ -502,98 +395,12 @@ void	step(var_t *var)
 	}
 }
 
-int	distIsSorted(var_t *var, double *dist)
-{
-
-}
-
-void	swapQueueRev(var_t *var, double *dist)
-{
-	int i;
-	double swap;
-	int x;
-	int y;
-
-	x = 0;
-	y = 0;
-	i = 1;
-
-	//ft_printf("rev");
-	while (i < var->spriteNum)
-	{
-		if (dist[i - 1] < dist[i])
-		{//ft_printf("here");
-			swap = dist[i - 1];
-			dist[i - 1] = dist[i];
-			dist[i] = swap;
-			x = var->spriteQueue[i - 1][0];
-			y = var->spriteQueue[i - 1][1];
-			var->spriteQueue[i - 1][0] = var->spriteQueue[i][0];
-			var->spriteQueue[i - 1][1] = var->spriteQueue[i][1];
-			var->spriteQueue[i][0] = x;
-			var->spriteQueue[i][1] = y;
-			i = 1;
-			x = 0;
-			y = 0;
-		}
-		else
-			i++;
-		
-	}
-}
-
 int *cpy(var_t *var, int *tab)
 {
 	int *ret = malloc(sizeof(int) * 2);
 	ret[0] = tab[0];
 	ret[1] = tab[1];
 	return (ret);
-}
-
-void	swapQueue(var_t *var, double *dist)
-{
-
-	int i = 0;
-	int x;
-	int y;
-
-	int *swap;
-
-	// swap = cpy(var, var->spriteQueue[0]);
-	// var->spriteQueue[0] = cpy(var, var->spriteQueue[1]);
-	// var->spriteQueue[1] = cpy(var, swap);
- 	// int i;
-	// double swap;
-	// int x;
-	// int y;
-
-	// x = 0;
-	// y = 0;
-	// i = 1;
-	// //printf("d");
-	// //ft_printf("normal %d\n", distIsSorted(var, dist));
-	// ft_printf("here");
-	// while (i < var->spriteNum)
-	// {
-	// 	if (dist[i - 1] > dist[i])
-	// 	{//ft_printf("here");
-	// 		swap = dist[i - 1];
-	// 		dist[i - 1] = dist[i];
-	// 		dist[i] = swap;
-	// 		x = var->spriteQueue[i - 1][0];
-	// 		y = var->spriteQueue[i - 1][1];
-	// 		var->spriteQueue[i - 1][0] = var->spriteQueue[i][0];
-	// 		var->spriteQueue[i - 1][1] = var->spriteQueue[i][1];
-	// 		var->spriteQueue[i][0] = x;
-	// 		var->spriteQueue[i][1] = y;
-	// 		i = 1;
-	// 		x = 0;
-	// 		y = 0;
-	// 	}
-	// 	else
-	// 		i++;
-		
-	// }
 }
 
 double	*getDist(var_t *var)
@@ -633,40 +440,6 @@ double	*getDist(var_t *var)
 	}
 	return (dist);
 }
-
-// void	swapQ(var_t *var)
-// {
-// 	int i;
-// 	int y;
-// 	int swap2;
-// 	int swap3;
-// 	double swap;
-
-// 	i = 1;
-// 	y = i + 1;
-// 	while (i < var->spriteNum)
-// 	{
-// 		if (var->dist[i] > var->dist[i - 1])
-// 		{
-// 			//printf("test");
-// 			swap = var->dist[i - 1];
-// 			var->dist[i - 1] = var->dist[i];
-// 			var->dist[i] = swap;
-// 			swap2 = var->queue[y - 2];
-// 			var->queue[y - 2] = var->queue[y];
-// 			var->queue[y] = swap2;
-// 			y++;
-// 			swap2 = var->queue[y - 2];
-// 			var->queue[y - 2] = var->queue[y];
-// 			var->queue[y] = swap2;
-// 			i = 1;
-// 			y = i + 1;
-//  		}
-// 		else
-// 		i++;
-// 		y = i + 3;
-// 	}
-// }
 
 int	**sortQueue(var_t *var)
 {
@@ -727,70 +500,8 @@ void	draw_sprite(var_t *var, int sx, int sy)
 	}	
 }
 
-// void	draw_sprite(var_t *var)
-// {
-// 	int z = 0;;
-
-// 	while (z < var->spriteNum)
-// 	{
-// 	int x;
-// 	int y;
-// 	double vMove = 0.0;
-// 	double spriteX = var->spriteQueue[z][0] - var->posX;
-// 	double spriteY = var->spriteQueue[z][1] - var->posY;
-// 	printf("%d %d\n", var->spriteQueue[z][0], var->spriteQueue[z][1]);
-
-// 	double invDet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
-
-// 	double transformX = invDet * (var->dirY * spriteX - var->dirX * spriteY);
-// 	double transformY = invDet * (-var->planeY * spriteX + var->planeX * spriteY);
-// 	int vMoveScreen = (int)(vMove / transformY);
-
-// 	int spriteScreenX = (int)((var->s_w / 2 * (1 + transformX / transformY)));
-
-// 	int spriteHeight = abs((int)(var->s_h / (transformY)));
-
-// 	int drawStartY = -spriteHeight / 2 + var->s_h / 2 + vMoveScreen;
-// 	if (drawStartY < 0)
-// 		drawStartY = 0;
-// 	int drawEndY = spriteHeight / 2 + var->s_h / 2 + vMoveScreen;
-// 	if (drawEndY >= var->s_h)
-// 		drawEndY = var->s_h - 1;
-
-// 	int spriteWidth = abs((int)(var->s_h / (transformY)));
-// 	int drawStartX = -spriteWidth / 2 + spriteScreenX;
-// 	if (drawStartX < 0)
-// 		drawStartX = 0;
-// 	int drawEndX = spriteWidth / 2 + spriteScreenX;
-// 	if (drawEndX >= var->s_w)
-// 		drawEndX = var->s_w - 1;
-// 	x = drawStartX - 1;
-// 	int t_bpp;
-// 	int t_line;
-// 	int t_endian;
-// 	while (++x < drawEndX)
-// 	{
-// 		if (transformY > 0 && x > 0 && x < var->s_w && transformY < var->zBuffer[x])
-// 		{
-// 			y = drawStartY - 1;
-// 			int texX = (int)(256 * (x - (-spriteWidth / 2 + spriteScreenX)) * var->tex_w/ spriteWidth) / 256;
-
-// 			while(++y < drawEndY)
-// 			{
-// 				int d = (y - vMoveScreen) * 256 - var->s_h * 128 + spriteHeight * 128;
-// 				int texY = ((d * var->tex_h / spriteHeight) / 256);
-// 				int color = var->loaded_addr[6][(texX + texY * var->tex_w)];
-// 				if ((color & 0x00FFFFFF) != 0) pixel_put(var, x, y, color);
-// 			}
-// 		}
-// 	}	
-// 		z++;
-// 	}
-// }
-
 void	hit(var_t *var)
 {
-	//hit
 	while (var->hit == 0)
 	{
 		if (var->sideDistX < var->sideDistY)
@@ -869,7 +580,6 @@ void	draw_texture(var_t *var)
 		dst = var->addr + (var->drawStart * var->line + var->x * (var->bpp / 8));
 		texy = (int)texpos;
 		texpos += step;
-		//*(unsigned int*)dst = color;
 		pixel_put(var, var->x, var->drawStart, var->loaded_addr[var->hit][64 * texy + texx]);
 		var->drawStart++;
 	}
@@ -889,38 +599,13 @@ int	convHex(char *hex)
 			}
 			i++;
 		}
-	//printf("ret = %d\n", i);
 	return (i);
-}
-
-int *splitrgb(char *hex)
-{
-	char *str;
-	int *ret;
-	int i = 0;
-	ret = malloc(sizeof(int) * 3);
-	str = ft_strdup(hex);
-	str[2] = '\0';
-	ret[0] = convHex(str);
-	ret[1] = 0;
-	ret[2] = 0;
-	
-	// while (i < 3)
-	// {
-	// 	printf("%d ", ret[i]);
-	// 	i++;
-	// }
-	// printf("\n");
-	// printf("%s\n", hex);
-	//printf("%d %s %s\n", ret[1], str, hex);
-	return (ret);
 }
 
 void	draw(var_t *var)
 {
 	draw_info(var);
 	var->color = rgb_int(185, 94, 255);
-	//splitrgb(ft_putnbr_base(var->color, HEXD));
 	if (var->side == 1)
 		var->color = var->color / 2;
 		verline(var, var->x, var->drawStart, var->drawEnd, var->color);
@@ -928,7 +613,6 @@ void	draw(var_t *var)
 
 void	raycast(var_t *var)
 {
-	//ray
 	var->x = 0;
 	int i = 0;
 	while (var->x < var->s_w)
@@ -971,102 +655,38 @@ void	init_keys(var_t *var, int key_number)
 int		key_pressed(int keycode, var_t *var)
 {
 	if (keycode == 53)
-	{
-		var->ESC = 1;
-		ft_putstr("\nESC = ");
-		ft_putnbr(var->ESC);
-	}
-		
+		closeGame(var, "ESC_PRESSED");
 	else if (keycode == 13)
-	{
 		var->W = 1;
-		ft_putstr("\nW = ");
-		ft_putnbr(var->W);
-	}
-		
 	else if (keycode == 0)
-	{
 		var->A = 1;
-		ft_putstr("\nA = ");
-		ft_putnbr(var->A);
-	}
-		
 	else if (keycode == 1)
-	{
 		var->S = 1;
-		ft_putstr("\nS = ");
-		ft_putnbr(var->S);
-	}
-		
 	else if (keycode == 2)
-	{
 		var->D = 1;
-		ft_putstr("\nD = ");
-		ft_putnbr(var->D);
-	}
 	else if (keycode == 123)
-	{
 		var->L_R = 1;
-		ft_putstr("\nL_R = ");
-		ft_putnbr(var->L_R);
-	}
 	else if (keycode == 124)
-	{
 		var->R_R = 1;
-		ft_putstr("\nR_R = ");
-		ft_putnbr(var->R_R);
-	}
 	return (0);	
 }
 
 int		key_released(int keycode, var_t *var)
 {
 	if (keycode == 53)
-	{
 		var->ESC = 0;
-		ft_putstr("\nESC = ");
-		ft_putnbr(var->ESC);
-	}
-		
 	else if (keycode == 13)
-	{
 		var->W = 0;
-		ft_putstr("\nW = ");
-		ft_putnbr(var->W);
-	}
-		
 	else if (keycode == 0)
-	{
 		var->A = 0;
-		ft_putstr("\nA = ");
-		ft_putnbr(var->A);
-	}
-		
 	else if (keycode == 1)
-	{
 		var->S = 0;
-		ft_putstr("\nS = ");
-		ft_putnbr(var->S);
-	}
-		
 	else if (keycode == 2)
-	{
 		var->D = 0;
-		ft_putstr("\nD = ");
-		ft_putnbr(var->D);
-	}
 	else if (keycode == 123)
-	{
 		var->L_R = 0;
-		ft_putstr("\nL_R = ");
-		ft_putnbr(var->L_R);
-	}
 	else if (keycode == 124)
-	{
 		var->R_R = 0;
-		ft_putstr("\nR_R = ");
-		ft_putnbr(var->R_R);
-	}
 	return (0);
 }
 
@@ -1079,12 +699,6 @@ int	move_is_possible(int pos)
 
 void	fwd_bckwrd(var_t *var)
 {
-// if (var->W)
-//     {
-// 		if (move_is_possible(var->map[(int)(var->posX + var->dirX * moveSpeed)]
-//                          [(int)(var->posX)]))
-//                          var->posX += var->dirX * moveSpeed * 0.5;
-//     }
 if (var->W)
     {
       if(var->map[(int)(var->posX + var->dirX * moveSpeed)][(int)(var->posY)] == 0) 
@@ -1175,139 +789,109 @@ int	load_text(var_t *var)
 	{
 		if (var->text_paths[i])
 		{
-			ft_printf("---->%s |%d|\n", var->text_paths[i],i);
-			// if (i == 6)
-			// 	ft_putstr(var->text_paths[i]);
+			ft_fprintf(1, "---->%s |%d|\n", var->text_paths[i],i);
 			var->loaded_text[i] = mlx_xpm_file_to_image(var->mlx_ptr, var->text_paths[i], &var->tex_w, &var->tex_h);
 			var->loaded_addr[i] = (int *)mlx_get_data_addr(var->loaded_text[i], &t_bpp, &t_line, &t_endian);
 		}
 		else
-		ft_printf("ERR: --> %d\n", i);
+		ft_fprintf(1, "ERR: --> %d\n", i);
 		i++;
 	}
 }
 
-void drawbmp (char *filename, var_t *var) {
-
-unsigned int headers[13];
-FILE * outfile;
-int extrabytes;
-int paddedsize;
-int x; int y; int n;
-int red, green, blue;
-int fd = open(filename, O_TRUNC | O_WRONLY | O_APPEND | O_CREAT);
-int WIDTH = var->s_w;
-int HEIGHT = var->s_h;
-
-extrabytes = 4 - ((WIDTH * 3) % 4) % 4;                 // How many bytes of padding to add to each
-                                                    // horizontal line - the size of which must
-                                                    // be a multiple of 4 bytes.
-if (extrabytes == 4)
-   extrabytes = 0;
-
-paddedsize = ((WIDTH * 3) + extrabytes) * HEIGHT;
-
-// Headers...
-// Note that the "BM" identifier in bytes 0 and 1 is NOT included in these "headers".
-
-headers[0]  = paddedsize + 54;      // bfSize (whole file size)
-headers[1]  = 0;                    // bfReserved (both)
-headers[2]  = 54;                   // bfOffbits
-headers[3]  = 40;                   // biSize
-headers[4]  = WIDTH;  // biWidth
-headers[5]  = HEIGHT; // biHeight
-
-// Would have biPlanes and biBitCount in position 6, but they're shorts.
-// It's easier to write them out separately (see below) than pretend
-// they're a single int, especially with endian issues...
-
-headers[7]  = 0;                    // biCompression
-headers[8]  = paddedsize;           // biSizeImage
-headers[9]  = 0;                    // biXPelsPerMeter
-headers[10] = 0;                    // biYPelsPerMeter
-headers[11] = 0;                    // biClrUsed
-headers[12] = 0;                    // biClrImportant
-
-outfile = fdopen(fd, "w");
-
-//
-// Headers begin...
-// When printing ints and shorts, we write out 1 character at a time to avoid endian issues.
-//
-
-fprintf(outfile, "BM");
-
-for (n = 0; n <= 5; n++)
+unsigned int	*getHeader(int width, int height, int paddedsize)
 {
-   fprintf(outfile, "%c", headers[n] & 0x000000FF);
-   fprintf(outfile, "%c", (headers[n] & 0x0000FF00) >> 8);
-   fprintf(outfile, "%c", (headers[n] & 0x00FF0000) >> 16);
-   fprintf(outfile, "%c", (headers[n] & (unsigned int) 0xFF000000) >> 24);
+	unsigned int *headers;
+
+	if (!(headers = malloc(sizeof(unsigned int) * 13)))
+		return (0);
+	headers[0]  = paddedsize + 54;     
+	headers[1]  = 0;                   
+	headers[2]  = 54;                  
+	headers[3]  = 40;             
+	headers[4]  = width;
+	headers[5]  = height;
+	headers[7]  = 0;               
+	headers[8]  = paddedsize;           
+	headers[9]  = 0;                   
+	headers[10] = 0;                    
+	headers[11] = 0;                    
+	headers[12] = 0;
+	return (headers);
 }
 
-// These next 4 characters are for the biPlanes and biBitCount fields.
-
-fprintf(outfile, "%c", 1);
-fprintf(outfile, "%c", 0);
-fprintf(outfile, "%c", 24);
-fprintf(outfile, "%c", 0);
-
-for (n = 7; n <= 12; n++)
+void	writeHeader(int fd, unsigned int *headers)
 {
-   fprintf(outfile, "%c", headers[n] & 0x000000FF);
-   fprintf(outfile, "%c", (headers[n] & 0x0000FF00) >> 8);
-   fprintf(outfile, "%c", (headers[n] & 0x00FF0000) >> 16);
-   fprintf(outfile, "%c", (headers[n] & (unsigned int) 0xFF000000) >> 24);
+	int i;
+
+	i = -1;
+	while (++i <= 5)
+	{
+		ft_fprintf(fd, "%c", headers[i] & 0x000000FF);
+		ft_fprintf(fd, "%c", (headers[i] & 0x0000FF00) >> 8);
+		ft_fprintf(fd, "%c", (headers[i] & 0x00FF0000) >> 16);
+		ft_fprintf(fd, "%c", (headers[i] & (unsigned int) 0xFF000000) >> 24);
+	}
+	ft_fprintf(fd, "%c", 1);
+	ft_fprintf(fd, "%c", 0);
+	ft_fprintf(fd, "%c", 24);
+	ft_fprintf(fd, "%c", 0);
+	i = 6;
+	while (++i <= 12)
+	{
+		ft_fprintf(fd, "%c", headers[i] & 0x000000FF);
+		ft_fprintf(fd, "%c", (headers[i] & 0x0000FF00) >> 8);
+		ft_fprintf(fd, "%c", (headers[i] & 0x00FF0000) >> 16);
+		ft_fprintf(fd, "%c", (headers[i] & (unsigned int) 0xFF000000) >> 24);
+	}
 }
 
-//
-// Headers done, now write the data...
-//
-int rgb;
-int color;
-int *ret;
-char *str;
-char *dst;
-for (y = HEIGHT - 1; y >= 0; y--)     // BMP image format is written from bottom to top...
+void	writeColor(var_t *var, int extrabytes, int fd)
 {
-   for (x = 0; x <= WIDTH - 1; x++)
+	int y;
+	int x;
+	char *dst;
+	int color;
+	int i;
+
+	y = var->s_h;
+	while (--y >= 0)
+	{
+	x = -1;
+   while(++x <= var->s_w - 1)
    {
-// 	   color = *(int*)(var->mlx_ptr
-// 			+ (4 * (int)var->s_w * ((int)var->s_h - 1 - y))
-// 			+ (4 * x));
-dst =  var->addr + (y * var->line + x * (var->bpp / 8));;
-color = *(unsigned int*)dst;
-	   rgb = color;
-	   //ret[0] = 255;
-		// red = ret[0];
-		// green = ret[1];
-		// blue = ret[2];
-		str = ft_putnbr_base(rgb, HEXD);
-		red = 255;
-		blue= 0;
-		green = 0;
-      if (red > 255) red = 255; if (red < 0) red = 0;
-      if (green > 255) green = 255; if (green < 0) green = 0;
-      if (blue > 255) blue = 255; if (blue < 0) blue = 0;
-
-      // Also, it's written in (b,g,r) format...
-	//   write(fd, &rgb, 3);
-
-	pixel_put_fd(var, color, outfile);
-    //   fprintf(outfile, "%c", blue);
-    //   fprintf(outfile, "%c", green);
-    //   fprintf(outfile, "%c",red);
+	dst =  var->addr + (y * var->line + x * (var->bpp / 8));;
+	color = *(unsigned int*)dst;
+	pixel_put_fd(var, color, fd);
    }
-   if (extrabytes)      // See above - BMP lines must be of lengths divisible by 4.
+   if (extrabytes)
    {
-      for (n = 1; n <= extrabytes; n++)
+      for (i = 1; i <= extrabytes; i++)
       {
-         fprintf(outfile, "%c", 0);
+         ft_fprintf(fd, "%c", 0);
       }
    }
 }
+}
 
-fclose(outfile);
+void drawbmp (char *filename, var_t *var)
+{
+unsigned int *headers;
+int extrabytes;
+int paddedsize;
+int fd;
+
+fd = open(filename, O_TRUNC | O_WRONLY | O_APPEND | O_CREAT);
+extrabytes = 4 - ((var->s_w * 3) % 4) % 4;                 
+if (extrabytes == 4)
+   extrabytes = 0;
+paddedsize = ((var->s_w * 3) + extrabytes) * var->s_h;
+headers = getHeader(var->s_w, var->s_h, paddedsize);                  
+ft_fprintf(fd, "BM");
+writeHeader(fd, headers);
+writeColor(var, extrabytes, fd);
+close(fd);
+closeGame(var, "--save done");
 return;
 }
 
@@ -1320,12 +904,10 @@ int	screenshot(var_t *var)
 	while (i < var->spriteNum)
 	{
 		var->dist = getDist(var);
-		//printf("%f |%f| |%f|, ", var->dist[i], var->posX, var->posY);
 		draw_sprite(var, var->spriteQueue[var->spriteorder[i]][0], var->spriteQueue[var->spriteorder[i]][1]);
 		i++;
 	}	
-	drawbmp("screenshot.bmp",var);
-	exit(0);
+	drawbmp("screenshot2.bmp",var);
 	return (1);
 }
 
@@ -1346,15 +928,12 @@ int		run(var_t *var)
 	|| var->R_R || var->L_R)
 		cls(var);
 	raycast(var);
-	//sortQueue(var);
 	while (i < var->spriteNum)
 	{
 		var->dist = getDist(var);
-		//printf("%f |%f| |%f|, ", var->dist[i], var->posX, var->posY);
 		draw_sprite(var, var->spriteQueue[var->spriteorder[i]][0], var->spriteQueue[var->spriteorder[i]][1]);
 		i++;
 	}	
-	//draw_sprite(var);
 	mlx_put_image_to_window(var->mlx_ptr, var->mlx_win, var->img, 0, 0);
 }
 
@@ -1378,10 +957,10 @@ int	**copyMap(int height, int width, int index, var_t *var)
 	map = malloc(sizeof(int *) * height);
 	str = ft_split(&var->paramFile[index], '\n');
 	while (i < height)
-  {
-    map[i] = malloc(sizeof(int) * width);
-    i++;
-  }
+  	{
+    	map[i] = malloc(sizeof(int) * width);
+    	i++;
+  	}
 	i = 0;
 		while (str[i])
 		{
@@ -1406,7 +985,7 @@ int	spaceCount(char *str)
 	return (i);
 }
 
-void	checkLine(char *str, int y)
+int	checkLine(char *str, int y)
 {
 	int i;
 
@@ -1416,10 +995,7 @@ void	checkLine(char *str, int y)
 		if (str[i] == ' ')
 			i++;
 		if (!isWall(str[i]))
-			{
-				ft_printf("MAP_NOT_CLOSED");
-				exit (0);
-			}
+			return (0);
 		i++;
 	}
 }
@@ -1452,17 +1028,15 @@ int getMapHeight(char **str)
 	while (str[i])
 	{
 		if (i > 0 && spaceCount(str[i]) < spaceCount(str[i - 1]))
-			checkLine(str[i], spaceCount(str[i - 1]));
+			if (!(checkLine(str[i], spaceCount(str[i - 1]))))
+				return (0);
 		if (str[i][0] == ' ')
 		{
 			y = 0;
 			while (str[i][y] == ' ')
 				y++;
 			if (!isWall(str[i][y]))
-				{
-					ft_printf("MAP_NOT_CLOSED");
-					exit(0);
-				}
+				return (0);
 		}
 		else
 			y = 0;
@@ -1525,7 +1099,6 @@ void	initSpriteQueue(var_t *var)
 			var->spriteY = i;
 			var->spriteQueue[z][0] = y;
 			var->spriteQueue[z][1] = i;
-			//ft_printf("\nsprite -->%d %d", var->spriteX, var->spriteQueue[0][0]);
 			z++;
 		}
     	i++;
@@ -1610,7 +1183,7 @@ char	**getMapStr(var_t *var)
 	return (split);
 }
 
-void checkBottom(char *str)
+int checkBottom(char *str)
 {
 	int i;
 	int y;
@@ -1629,15 +1202,13 @@ void checkBottom(char *str)
 		if (str[i] == ' ')
 			i++;
 		if (!isWall(str[i]))
-			{
-				ft_printf("MAP_NOT_CLOSED");
-				exit(0);
-			}
+			return (0);
 		i++;
 	}
+	return (1);
 }
 
-void checkTop(char *str)
+int checkTop(char *str)
 {
 	int i;
 	int y;
@@ -1656,12 +1227,10 @@ void checkTop(char *str)
 		if (str[i] == ' ')
 			i++;
 		if (!isWall(str[i]))
-			{
-				ft_printf("MAP_NOT_CLOSED");
-				exit (0);
-			}
+				return (0);
 		i++;
 	}
+	return (1);
 }
 
 int isSymbol(char c)
@@ -1683,7 +1252,7 @@ int isSymbol(char c)
 	return (0);
 }
 
-void	lineIsOk(char *str)
+void	lineIsOk(char *str, var_t *var)
 {
 	int i;
 	
@@ -1694,29 +1263,20 @@ void	lineIsOk(char *str)
 			i++;
 	}
 	if (!isWall(str[i]))
-	{
-		ft_printf("MAP_NOT_CLOSED");
-		exit(0);
-	}	
+		closeGame(var, "MAP_NOT_CLOSED");	
 	while (str[i])
 	{
 		if (str[i] == ' ')
 			i++;
 		if (!isSymbol(str[i]))
-			{
-				ft_printf("%c MAP_SYMBOL_UNKOWN", str[i]);
-				exit(0);
-			}
+			closeGame(var,"MAP_SYMBOL_UNKNOWN");
 		i++;
 	}
 	if (!isWall(str[i - 1]))
-	{
-		printf("MAP_NOT_CLOSED");
-		exit(0);
-	}
+		closeGame(var, "MAP_NOT_CLOSED");
 }
 
-void checkMiddle(char **str)
+void checkMiddle(char **str, var_t *var)
 {
 	int i;
 	int y;
@@ -1725,21 +1285,23 @@ void checkMiddle(char **str)
 	y = 0;
 	while (str[i + 1])
 	{
-		lineIsOk(str[i]);
+		lineIsOk(str[i], var);
 		i++;
 	}
 }
 
-void checkMap(char **str)
+void checkMap(char **str, var_t *var)
 {
 	int i;
 
 	i = 0;
-	checkTop(str[0]);
-	checkMiddle(str);
+	if (!checkTop(str[0]))
+		closeGame(var, "MAP_NOT_CLOSED");
+	checkMiddle(str, var);
 	while (str[i])
 		i++;
-	checkBottom(str[i - 1]);
+	if (!(checkBottom(str[i - 1])))
+		closeGame(var, "MAP_NOT_CLOSED");
 }
 
 char *rmSpace(char *str)
@@ -1810,7 +1372,7 @@ char	**convMap(char **str)
 	{
 		str[i] = rmSpace(str[i]);
 		str[i] = NoRestrict_removeS(str[i]);
-		ft_printf("%s\n", str[i]);
+		ft_fprintf(1, "%s\n", str[i]);
 		i++;
 	}
 	return (str);
@@ -1852,25 +1414,20 @@ void getMapFromParamFile(var_t *var)
 	i = 0;
 	if (containSpace(str[0]))
 		str = convMap(str);
-	//exit(0);
-	checkMap(str);
+	checkMap(str, var);
 	var->m_width = getMapWidth(str);
-	ft_printf("width = %d\n", var->m_width);
-	var->m_height = getMapHeight(str);
+	ft_fprintf(1, "width = %d\n", var->m_width);
+	if (!(var->m_height = getMapHeight(str)))
+		closeGame(var, "MAP_NOT_CLOSED");
 	str = convSpace(str);
 		while (str[i])
 	{
 		printf("%s\n", str[i]);
 		i++;
 	}
-	//printf("-->%d", var->m_width);
-	//exit(0);
 	duplicate_map(var, str);
 	if (var->posX == -1 || var->posY == -1)
-		{
-			ft_printf("NO_PLAYER_START");
-			exit(0);
-		}
+		closeGame(var, "NO_PLAYER_START");
 	initSpriteQueue(var);
 }
 
@@ -1880,20 +1437,14 @@ void	checkColor(var_t *var)
 	while (i < 3)
 	{
 		if (!(var->F_color[i] > -1 && var->F_color[i] < 256))
-			{
-				ft_printf("COLOR_ERROR");
-				exit (0);
-			}
+			closeGame(var, "COLOR_ERROR");
 			i++;
 	}
 	i = 0;
 	while (i < 3)
 	{
 		if (!(var->C_color[i] > -1 && var->C_color[i] < 256))
-			{
-				ft_printf("COLOR_ERROR");
-				exit (0);
-			}
+			closeGame(var, "COLOR_ERROR");
 			i++;
 	}
 }
@@ -1903,14 +1454,11 @@ void	inithextable(var_t *var)
 	int i;
 
 	i = 0;
-	while (i < 255)
+	while (i <= 255)
 	{
 		var->hextable[i] = ft_putnbr_base(i, HEXD);
-		ft_printf("%s |%d|\n", var->hextable[i]);
 		i++;
 	}
-	var->hextable[254] = ft_putnbr_base(255, HEXD);
-	ft_printf("%s |%d|\n", var->hextable[254]);
 }
 
 void	initcolormap(var_t *var)
@@ -1939,6 +1487,9 @@ void	init_struct(var_t *var, char **argv)
     var->paramFile = NULL;
 	var->ParamSliced = NULL;
 	var->screenshot = 0;
+	var->mlx_win = NULL;
+	var->mlx_ptr = NULL;
+	var->addr = NULL;
 	if (ft_strcmp(argv[1], "--save"))
 		var->screenshot = 1;
     fd = open(argv[var->screenshot == 1 ? 2 : 1], O_RDONLY);
@@ -1966,7 +1517,7 @@ int	main(int argc, char **argv)
 
 	if (!(argc >= 2 && argc <= 3))
 	{
-		ft_printf("Please use [--save] argument to save the first frame into a bmp file\nfollowed by a .cub map or directly the map to launch the game");
+		ft_fprintf(1, "Please use [--save] argument to save the first frame into a bmp file\nfollowed by a .cub file or directly the .cub file to launch the game");
 		exit(0);
 	}
 	init_struct(&var, argv);
