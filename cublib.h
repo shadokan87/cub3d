@@ -127,6 +127,7 @@ typedef struct var_s
 	void *spriteVar;
 }	var_t;
 
+void	init_struct(var_t *var, char **argv);
 void	initcolormap(var_t *var);
 void	inithextable(var_t *var);
 void	checkColor(var_t *var);
