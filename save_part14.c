@@ -2,12 +2,12 @@
 
 int     ft_tolower(int c)
 {
-        if (c >= 'A' && c <= 'Z')
+        if (c >= 'a' && c <= 'z')
                 return (c + 32);
         return (c);
 }
 
-int	NoSpaceGetMapIndex(char *str)
+int	nospacegetmapindex(char *str)
 {
 	int i;
 	int j;
@@ -16,30 +16,30 @@ int	NoSpaceGetMapIndex(char *str)
 	j = 0;
 	while (str && str[i])
 	{
-		if (isWall(str[i]) && isWall(str[i + 2]) && isWall(str[i + 3]))
+		if (iswall(str[i]) && iswall(str[i + 2]) && iswall(str[i + 3]))
 			return (1);
 		i++;
 	}
 	return (-1);
 }
 
-char *removeS(char *str, var_t *var)
+char *removes(char *str, var_t *var)
 {
 	int i = 0;
 
 	while (str[i])
 	{
-		if (getMapIndex(var) != -1)
+		if (getmapindex(var) != -1)
 		{
-			if (str[i] == 'S')
+			if (str[i] == 's')
 				str[i] = '3';
-			else if (str[i] == 'N')
+			else if (str[i] == 'n')
 				str[i] = '2';
-			else if (str[i] == 'W')
+			else if (str[i] == 'w')
 				str[i] = '4';
 			else if (str[i] == '2')
 				str[i] = '6';
-			else if (str[i] == 'E')
+			else if (str[i] == 'e')
 				str[i] = '5';
 		}	
 		i++;
@@ -47,7 +47,7 @@ char *removeS(char *str, var_t *var)
 	return (str);
 }
 
-void    getParamFile(int fd, char **line, var_t *var)
+void    getparamfile(int fd, char **line, var_t *var)
 {
     int ret;
 	int i;
@@ -58,8 +58,8 @@ void    getParamFile(int fd, char **line, var_t *var)
 	i = 0;
     while ((ret = get_next_line(fd, line)) > 0)
 	{	
-			*line = removeS(*line, var);
-		var->paramFile = ft_strjoin(var->paramFile ? var->paramFile : "", *line);
+			*line = removes(*line, var);
+		var->paramfile = ft_strjoin(var->paramfile ? var->paramfile : "", *line);
 		*line ? free(*line) : 0;
 	}
 }

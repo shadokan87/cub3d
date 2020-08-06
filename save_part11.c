@@ -15,7 +15,7 @@ double	*sortqueue(var_t *var, double *dist)
 	double swap2;
 
 	i = 1;
-	while (i < var->spriteNum)
+	while (i < var->spritenum)
 	{
 		if (dist[i - 1] < dist[i])
 		{
@@ -33,22 +33,22 @@ double	*sortqueue(var_t *var, double *dist)
 	return (dist);
 }
 
-double	*getDist(var_t *var)
+double	*getdist(var_t *var)
 {
 	int i;
 	double *dist;
 	double swap;
 	int swap2;
 
-	dist = (double *)malloc(sizeof(double) * var->spriteNum);
-	var->spriteorder = malloc(sizeof(int) * var->spriteNum);
+	dist = (double *)malloc(sizeof(double) * var->spritenum);
+	var->spriteorder = malloc(sizeof(int) * var->spritenum);
 	i = 0;
-	while (i < var->spriteNum)
+	while (i < var->spritenum)
 	{
-		dist[i] = ((var->posX - var->spriteQueue[i][0]) *
-		(var->posX - var->spriteQueue[i][0])
-		+ (var->posY - var->spriteQueue[i][1])
-		* (var->posY - var->spriteQueue[i][1]));
+		dist[i] = ((var->posx - var->spritequeue[i][0]) *
+		(var->posx - var->spritequeue[i][0])
+		+ (var->posy - var->spritequeue[i][1])
+		* (var->posy - var->spritequeue[i][1]));
 		var->spriteorder[i] = i;
 		i++;
 	}
@@ -58,11 +58,11 @@ double	*getDist(var_t *var)
 void	init_sprite_var(var_t *var, int sx, int sy)
 {
 	var->vmove = 0.5;
-	var->spritex = sx - var->posX;
-	var->spritey = sy - var->posY;
-	var->invdet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
-	var->transformx = var->invdet * (var->dirY * var->spritex - var->dirX * var->spritey);
-	var->transformy = var->invdet * (-var->planeY * var->spritex + var->planeX * var->spritey);
+	var->spritex = sx - var->posx;
+	var->spritey = sy - var->posy;
+	var->invdet = 1.0 / (var->planex * var->diry - var->dirx * var->planey);
+	var->transformx = var->invdet * (var->diry * var->spritex - var->dirx * var->spritey);
+	var->transformy = var->invdet * (-var->planey * var->spritex + var->planex * var->spritey);
 	var->vmovescreen = (int)(var->vmove / var->transformy);
 	var->spritescreenx = (int)((var->s_w / 2 * (1 + var->transformx / var->transformy)));
 	var->spriteheight = abs((int)(var->s_h / (var->transformy)));
@@ -92,7 +92,7 @@ void	draw_sprite(var_t *var, int sx, int sy)
 	x = var->drawstartx - 1;
 	while (++x < var->drawendx)
 	{
-		if (var->transformy > 0 && x > 0 && x < var->s_w && var->transformy < var->zBuffer[x])
+		if (var->transformy > 0 && x > 0 && x < var->s_w && var->transformy < var->zbuffer[x])
 		{
 			y = var->drawstarty - 1;
 			var->texx = (int)(256 * (x - (-var->spritewidth / 2 + var->spritescreenx)) * var->tex_w/ var->spritewidth) / 256;
@@ -102,7 +102,7 @@ void	draw_sprite(var_t *var, int sx, int sy)
 				d = (y - var->vmovescreen) * 256 - var->s_h * 128 + var->spriteheight * 128;
 				var->texy = ((d * var->tex_h / var->spriteheight) / 256);
 				color = var->loaded_addr[6][(var->texx + var->texy * var->tex_w)];
-				if ((color & 0x00FFFFFF) != 0) pixel_put(var, x, y, color);
+				if ((color & 0x00ffffff) != 0) pixel_put(var, x, y, color);
 			}
 		}
 	}	

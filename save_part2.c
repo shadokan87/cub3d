@@ -1,6 +1,6 @@
 #include "cublib.h"
 
-char *rmSpace(char *str)
+char *rmspace(char *str)
 {
 	char *ret;
 	int newsize;
@@ -26,55 +26,55 @@ char *rmSpace(char *str)
 	return (ret);
 }
 
-char *NoRestrict_removeS(char *str)
+char *norestrict_removes(char *str)
 {
 	int i = 0;
 
 	while (str[i])
 	{
-			if (str[i] == 'S')
+			if (str[i] == 's')
 				str[i] = '3';
-			else if (str[i] == 'N')
+			else if (str[i] == 'n')
 				str[i] = '2';
-			else if (str[i] == 'W')
+			else if (str[i] == 'w')
 				str[i] = '4';
 			else if (str[i] == '2')
 				str[i] = '6';
-			else if (str[i] == 'E')
+			else if (str[i] == 'e')
 				str[i] = '5';	
 		i++;
 	}
 	return (str);
 }
 
-int	containSpace(char *str)
+int	containspace(char *str)
 {
 	int i;
 
 	i = 0;
 	while (str[i] == ' ')
 		i++;
-	if (isWall(str[i]) && isWall(str[i + 1]) && isWall(str[i + 2]))
+	if (iswall(str[i]) && iswall(str[i + 1]) && iswall(str[i + 2]))
 		return (1);
 	return (0);
 }
 
-char	**convMap(char **str)
+char	**convmap(char **str)
 {
 	int i;
 
 	i = 0;
 	while (str[i])
 	{
-		str[i] = rmSpace(str[i]);
-		str[i] = NoRestrict_removeS(str[i]);
+		str[i] = rmspace(str[i]);
+		str[i] = norestrict_removes(str[i]);
 		ft_fprintf(1, "%s\n", str[i]);
 		i++;
 	}
 	return (str);
 }
 
-char **convSpace(char **str)
+char **convspace(char **str)
 {
 	int i;
 	int y;
@@ -85,7 +85,7 @@ char **convSpace(char **str)
 	z = 0;
 	while (str[i])
 	{
-		z = spaceCount(str[i]);
+		z = spacecount(str[i]);
 		while (z > 0 && y < z)
 		{
 			if (y % 2 == 0)

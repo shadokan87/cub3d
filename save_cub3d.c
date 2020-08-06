@@ -26,7 +26,7 @@ int		rgb_int(int red, int green, int blue)
 	return (rgb);
 }
 
-char *Remove_extraSpaces(char *str)
+char *remove_extraspaces(char *str)
 {
     char *return_value;
     int i;
@@ -48,7 +48,7 @@ char *Remove_extraSpaces(char *str)
     return (return_value);
 }
 
-int	isWall(char c)
+int	iswall(char c)
 {
 	if (c == '4')
 		return (1);
@@ -63,16 +63,16 @@ int	isWall(char c)
 	return (0);
 }
 
-int	getMapIndex(var_t *var)
+int	getmapindex(var_t *var)
 {
 	int i;
 	int j;
 	
 	i = 0;
 	j = 0;
-	while (var->paramFile && var->paramFile[i])
+	while (var->paramfile && var->paramfile[i])
 	{
-		if (isWall(var->paramFile[i]) && var->paramFile[i + 1] == ' ' && isWall(var->paramFile[i + 2]))
+		if (iswall(var->paramfile[i]) && var->paramfile[i + 1] == ' ' && iswall(var->paramfile[i + 2]))
 			return (i);
 		i++;
 	}
@@ -85,20 +85,20 @@ int	main(int argc, char **argv)
 
 	if (!(argc >= 2 && argc <= 3))
 	{
-		ft_fprintf(1, "Please use [--save] argument to save the first frame into a bmp file\nfollowed by a .cub file or directly the .cub file to launch the game");
+		ft_fprintf(1, "please use [--save] argument to save the first frame into a bmp file\nfollowed by a .cub file or directly the .cub file to launch the game");
 		exit(0);
 	}
 	init_struct(&var, argv);
-	if ((var.mlx_ptr = mlx_init()) == NULL)
-		return (EXIT_FAILURE);
+	if ((var.mlx_ptr = mlx_init()) == null)
+		return (exit_failure);
 	if (var.s_w > 1914)
 		var.s_w = 1914;
 	if (var.s_h > 924)
 		var.s_h = 924;
-	if ((var.mlx_win = mlx_new_window(var.mlx_ptr, var.s_w, var.s_h, "cub3d")) == NULL)
-	return (EXIT_FAILURE);
+	if ((var.mlx_win = mlx_new_window(var.mlx_ptr, var.s_w, var.s_h, "cub3d")) == null)
+	return (exit_failure);
 	init_raycast(&var);
 	init_keys(&var, 5);
 	start(&var);
-	return (EXIT_SUCCESS);
+	return (exit_success);
 }

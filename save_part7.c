@@ -28,12 +28,12 @@ int	load_text(var_t *var)
 			var->loaded_addr[i] = (int *)mlx_get_data_addr(var->loaded_text[i], &t_bpp, &t_line, &t_endian);
 		}
 		else
-		ft_fprintf(1, "ERR: --> %d\n", i);
+		ft_fprintf(1, "err: --> %d\n", i);
 		i++;
 	}
 }
 
-unsigned int	*getHeader(int width, int height, int paddedsize)
+unsigned int	*getheader(int width, int height, int paddedsize)
 {
 	unsigned int *headers;
 
@@ -54,17 +54,17 @@ unsigned int	*getHeader(int width, int height, int paddedsize)
 	return (headers);
 }
 
-void	writeHeader(int fd, unsigned int *headers)
+void	writeheader(int fd, unsigned int *headers)
 {
 	int i;
 
 	i = -1;
 	while (++i <= 5)
 	{
-		ft_fprintf(fd, "%c", headers[i] & 0x000000FF);
-		ft_fprintf(fd, "%c", (headers[i] & 0x0000FF00) >> 8);
-		ft_fprintf(fd, "%c", (headers[i] & 0x00FF0000) >> 16);
-		ft_fprintf(fd, "%c", (headers[i] & (unsigned int) 0xFF000000) >> 24);
+		ft_fprintf(fd, "%c", headers[i] & 0x000000ff);
+		ft_fprintf(fd, "%c", (headers[i] & 0x0000ff00) >> 8);
+		ft_fprintf(fd, "%c", (headers[i] & 0x00ff0000) >> 16);
+		ft_fprintf(fd, "%c", (headers[i] & (unsigned int) 0xff000000) >> 24);
 	}
 	ft_fprintf(fd, "%c", 1);
 	ft_fprintf(fd, "%c", 0);
@@ -73,14 +73,14 @@ void	writeHeader(int fd, unsigned int *headers)
 	i = 6;
 	while (++i <= 12)
 	{
-		ft_fprintf(fd, "%c", headers[i] & 0x000000FF);
-		ft_fprintf(fd, "%c", (headers[i] & 0x0000FF00) >> 8);
-		ft_fprintf(fd, "%c", (headers[i] & 0x00FF0000) >> 16);
-		ft_fprintf(fd, "%c", (headers[i] & (unsigned int) 0xFF000000) >> 24);
+		ft_fprintf(fd, "%c", headers[i] & 0x000000ff);
+		ft_fprintf(fd, "%c", (headers[i] & 0x0000ff00) >> 8);
+		ft_fprintf(fd, "%c", (headers[i] & 0x00ff0000) >> 16);
+		ft_fprintf(fd, "%c", (headers[i] & (unsigned int) 0xff000000) >> 24);
 	}
 }
 
-void	writeColor(var_t *var, int extrabytes, int fd)
+void	writecolor(var_t *var, int extrabytes, int fd)
 {
 	int y;
 	int x;

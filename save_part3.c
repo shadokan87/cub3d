@@ -1,6 +1,6 @@
 #include "cublib.h"
 
-int checkTop(char *str)
+int checktop(char *str)
 {
 	int i;
 	int y;
@@ -18,14 +18,14 @@ int checkTop(char *str)
 	{
 		if (str[i] == ' ')
 			i++;
-		if (!isWall(str[i]))
+		if (!iswall(str[i]))
 				return (0);
 		i++;
 	}
 	return (1);
 }
 
-int isSymbol(char c)
+int issymbol(char c)
 {
 	if (c == '4')
 		return (1);
@@ -44,7 +44,7 @@ int isSymbol(char c)
 	return (0);
 }
 
-void	lineIsOk(char *str, var_t *var)
+void	lineisok(char *str, var_t *var)
 {
 	int i;
 	
@@ -54,21 +54,21 @@ void	lineIsOk(char *str, var_t *var)
 		while (str[i] && str[i] == ' ')
 			i++;
 	}
-	if (!isWall(str[i]))
-		closeGame(var, "MAP_NOT_CLOSED");	
+	if (!iswall(str[i]))
+		closegame(var, "map_not_closed");	
 	while (str[i])
 	{
 		if (str[i] == ' ')
 			i++;
-		if (!isSymbol(str[i]))
-			closeGame(var,"MAP_SYMBOL_UNKNOWN");
+		if (!issymbol(str[i]))
+			closegame(var,"map_symbol_unknown");
 		i++;
 	}
-	if (!isWall(str[i - 1]))
-		closeGame(var, "MAP_NOT_CLOSED");
+	if (!iswall(str[i - 1]))
+		closegame(var, "map_not_closed");
 }
 
-void checkMiddle(char **str, var_t *var)
+void checkmiddle(char **str, var_t *var)
 {
 	int i;
 	int y;
@@ -77,21 +77,21 @@ void checkMiddle(char **str, var_t *var)
 	y = 0;
 	while (str[i + 1])
 	{
-		lineIsOk(str[i], var);
+		lineisok(str[i], var);
 		i++;
 	}
 }
 
-void checkMap(char **str, var_t *var)
+void checkmap(char **str, var_t *var)
 {
 	int i;
 
 	i = 0;
-	if (!checkTop(str[0]))
-		closeGame(var, "MAP_NOT_CLOSED");
-	checkMiddle(str, var);
+	if (!checktop(str[0]))
+		closegame(var, "map_not_closed");
+	checkmiddle(str, var);
 	while (str[i])
 		i++;
-	if (!(checkBottom(str[i - 1])))
-		closeGame(var, "MAP_NOT_CLOSED");
+	if (!(checkbottom(str[i - 1])))
+		closegame(var, "map_not_closed");
 }

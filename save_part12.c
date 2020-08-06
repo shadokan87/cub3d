@@ -64,33 +64,33 @@ void	init_raycast(var_t *var)
 	var->s_h = var->s_h;
 	var->img = mlx_new_image(var->mlx_ptr, var->s_w, var->s_h);
 	var->addr = mlx_get_data_addr(var->img, &var->bpp, &var->line, &var->endian);
-	var->dirX = -1;
-	var->dirY = 0;
-	var->planeX = 0;
-	var->planeY = 0.66;
+	var->dirx = -1;
+	var->diry = 0;
+	var->planex = 0;
+	var->planey = 0.66;
 	var->time = 0;
 }
 
 void	step(var_t *var)
 {
-	if (var->rayDirX < 0)
+	if (var->raydirx < 0)
 	{
-		var->stepX = -1;
-		var->sideDistX = (var->posX - var->mapX) * var->deltaDistX;
+		var->stepx = -1;
+		var->sidedistx = (var->posx - var->mapx) * var->deltadistx;
 	}
 	else
 	{
-		var->stepX = 1;
-		var->sideDistX = (var->mapX + 1.0 - var->posX) * var->deltaDistX;
+		var->stepx = 1;
+		var->sidedistx = (var->mapx + 1.0 - var->posx) * var->deltadistx;
 	}
-	if (var->rayDirY < 0)
+	if (var->raydiry < 0)
 	{
-		var->stepY = -1;
-		var->sideDistY = (var->posY - var->mapY) * var->deltaDistY;
+		var->stepy = -1;
+		var->sidedisty = (var->posy - var->mapy) * var->deltadisty;
 	}
 	else
 	{
-		var->stepY = 1;
-		var->sideDistY = (var->mapY + 1.0 - var->posY) * var->deltaDistY;
+		var->stepy = 1;
+		var->sidedisty = (var->mapy + 1.0 - var->posy) * var->deltadisty;
 	}
 }

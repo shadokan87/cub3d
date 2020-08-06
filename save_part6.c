@@ -8,17 +8,17 @@ int extrabytes;
 int paddedsize;
 int fd;
 
-fd = open(filename, O_TRUNC | O_WRONLY | O_APPEND | O_CREAT);
+fd = open(filename, o_trunc | o_wronly | o_append | o_creat);
 extrabytes = 4 - ((var->s_w * 3) % 4) % 4;                 
 if (extrabytes == 4)
    extrabytes = 0;
 paddedsize = ((var->s_w * 3) + extrabytes) * var->s_h;
-headers = getHeader(var->s_w, var->s_h, paddedsize);                  
-ft_fprintf(fd, "BM");
-writeHeader(fd, headers);
-writeColor(var, extrabytes, fd);
+headers = getheader(var->s_w, var->s_h, paddedsize);                  
+ft_fprintf(fd, "bm");
+writeheader(fd, headers);
+writecolor(var, extrabytes, fd);
 close(fd);
-closeGame(var, "--save done");
+closegame(var, "--save done");
 return;
 }
 
@@ -28,10 +28,10 @@ int	screenshot(var_t *var)
 
 	i = 0;
 	raycast(var);
-	while (i < var->spriteNum)
+	while (i < var->spritenum)
 	{
-		var->dist = getDist(var);
-		draw_sprite(var, var->spriteQueue[var->spriteorder[i]][0], var->spriteQueue[var->spriteorder[i]][1]);
+		var->dist = getdist(var);
+		draw_sprite(var, var->spritequeue[var->spriteorder[i]][0], var->spritequeue[var->spriteorder[i]][1]);
 		i++;
 	}	
 	drawbmp("screenshot2.bmp",var);
@@ -51,14 +51,14 @@ int		run(var_t *var)
 	if (var->screenshot)
 		screenshot(var);
 	listen_keys(var);
-	if (var->S || var->W || var->D || var->A
-	|| var->R_R || var->L_R)
+	if (var->s || var->w || var->d || var->a
+	|| var->r_r || var->l_r)
 		cls(var);
 	raycast(var);
-	while (i < var->spriteNum)
+	while (i < var->spritenum)
 	{
-		var->dist = getDist(var);
-		draw_sprite(var, var->spriteQueue[var->spriteorder[i]][0], var->spriteQueue[var->spriteorder[i]][1]);
+		var->dist = getdist(var);
+		draw_sprite(var, var->spritequeue[var->spriteorder[i]][0], var->spritequeue[var->spriteorder[i]][1]);
 		i++;
 	}	
 	mlx_put_image_to_window(var->mlx_ptr, var->mlx_win, var->img, 0, 0);
@@ -71,7 +71,7 @@ int		start(var_t *var)
 	mlx_loop(var->mlx_ptr);
 }
 
-int	**copyMap(int height, int width, int index, var_t *var)
+int	**copymap(int height, int width, int index, var_t *var)
 {
 	int **map;
 	char **str;
@@ -82,7 +82,7 @@ int	**copyMap(int height, int width, int index, var_t *var)
 	i = 0;
 	y = 0;
 	map = malloc(sizeof(int *) * height);
-	str = ft_split(&var->paramFile[index], '\n');
+	str = ft_split(&var->paramfile[index], '\n');
 	while (i < height)
   	{
     	map[i] = malloc(sizeof(int) * width);

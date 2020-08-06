@@ -1,6 +1,6 @@
 #include "cublib.h"
 
-int	spaceCount(char *str)
+int	spacecount(char *str)
 {
 	int i;
 
@@ -10,7 +10,7 @@ int	spaceCount(char *str)
 	return (i);
 }
 
-int	checkLine(char *str, int y)
+int	checkline(char *str, int y)
 {
 	int i;
 
@@ -19,7 +19,7 @@ int	checkLine(char *str, int y)
 	{
 		if (str[i] == ' ')
 			i++;
-		if (!isWall(str[i]))
+		if (!iswall(str[i]))
 			return (0);
 		i++;
 	}
@@ -41,7 +41,7 @@ int *init_to_fill(var_t *var)
 	return (to_fill);
 }
 
-int getMapHeight(char **str)
+int getmapheight(char **str)
 {
 	int height;
 	int i;
@@ -52,15 +52,15 @@ int getMapHeight(char **str)
 	height = 0;
 	while (str[i])
 	{
-		if (i > 0 && spaceCount(str[i]) < spaceCount(str[i - 1]))
-			if (!(checkLine(str[i], spaceCount(str[i - 1]))))
+		if (i > 0 && spacecount(str[i]) < spacecount(str[i - 1]))
+			if (!(checkline(str[i], spacecount(str[i - 1]))))
 				return (0);
 		if (str[i][0] == ' ')
 		{
 			y = 0;
 			while (str[i][y] == ' ')
 				y++;
-			if (!isWall(str[i][y]))
+			if (!iswall(str[i][y]))
 				return (0);
 		}
 		else
@@ -70,7 +70,7 @@ int getMapHeight(char **str)
 	return (i);
 }
 
-int	getMapWidth(char **str)
+int	getmapwidth(char **str)
 {
 	int width;
 	int i;
@@ -97,5 +97,5 @@ int	getMapWidth(char **str)
 			width++;
 		i++;
 	}
-return (width + (spaceCount(str[index]) / 2));
+return (width + (spacecount(str[index]) / 2));
 }
