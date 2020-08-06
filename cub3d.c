@@ -441,11 +441,6 @@ double	*getDist(var_t *var)
 	return (sortqueue(var, dist));
 }
 
-int	**sortQueue(var_t *var)
-{
-	var->dist = getDist(var);
-}
-
 void	init_sprite_var(var_t *var, int sx, int sy)
 {
 	var->vmove = 0.5;
