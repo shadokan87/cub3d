@@ -155,13 +155,9 @@ void    getParamFile(int fd, char **line, var_t *var)
     while ((ret = get_next_line(fd, line)) > 0)
 	{	
 			*line = removeS(*line, var);
-			//ft_printf("%s", *line);
 		var->paramFile = ft_strjoin(var->paramFile ? var->paramFile : "", *line);
+		*line ? free(*line) : 0;
 	}
-		
-	// to_free = var->paramFile;
-	// var->paramFile = Remove_extraSpaces(var->paramFile);
-	// free(to_free);
 }
 
 int  ft_strcmp(char *str, char *str2)
@@ -202,11 +198,6 @@ void   fillLoopParams(var_t *var)
     i = 0;
     while (var->ParamSliced[i] != NULL)
     {
-if (ft_strcmp(var->ParamSliced[i], "r"))
-        {
-            var->s_w = ft_atoi(var->ParamSliced[i + 1]);
-            var->s_h = ft_atoi(var->ParamSliced[i + 2]);
-        }
         if (ft_strcmp(var->ParamSliced[i], "R"))
         {
             var->s_w = ft_atoi(var->ParamSliced[i + 1]);
@@ -403,25 +394,12 @@ int *cpy(var_t *var, int *tab)
 	return (ret);
 }
 
-double	*getDist(var_t *var)
+double	*sortqueue(var_t *var, double *dist)
 {
 	int i;
-	double *dist;
 	double swap;
-	int swap2;
+	double swap2;
 
-	dist = (double *)malloc(sizeof(double) * var->spriteNum);
-	var->spriteorder = malloc(sizeof(int) * var->spriteNum);
-	i = 0;
-	while (i < var->spriteNum)
-	{
-		dist[i] = ((var->posX - var->spriteQueue[i][0]) *
-		(var->posX - var->spriteQueue[i][0])
-		+ (var->posY - var->spriteQueue[i][1])
-		* (var->posY - var->spriteQueue[i][1]));
-		var->spriteorder[i] = i;
-		i++;
-	}
 	i = 1;
 	while (i < var->spriteNum)
 	{
@@ -441,59 +419,80 @@ double	*getDist(var_t *var)
 	return (dist);
 }
 
+double	*getDist(var_t *var)
+{
+	int i;
+	double *dist;
+	double swap;
+	int swap2;
+
+	dist = (double *)malloc(sizeof(double) * var->spriteNum);
+	var->spriteorder = malloc(sizeof(int) * var->spriteNum);
+	i = 0;
+	while (i < var->spriteNum)
+	{
+		dist[i] = ((var->posX - var->spriteQueue[i][0]) *
+		(var->posX - var->spriteQueue[i][0])
+		+ (var->posY - var->spriteQueue[i][1])
+		* (var->posY - var->spriteQueue[i][1]));
+		var->spriteorder[i] = i;
+		i++;
+	}
+	return (sortqueue(var, dist));
+}
+
 int	**sortQueue(var_t *var)
 {
 	var->dist = getDist(var);
+}
+
+void	init_sprite_var(var_t *var, int sx, int sy)
+{
+	var->vmove = 0.5;
+	var->spritex = sx - var->posX;
+	var->spritey = sy - var->posY;
+	var->invdet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
+	var->transformx = var->invdet * (var->dirY * var->spritex - var->dirX * var->spritey);
+	var->transformy = var->invdet * (-var->planeY * var->spritex + var->planeX * var->spritey);
+	var->vmovescreen = (int)(var->vmove / var->transformy);
+	var->spritescreenx = (int)((var->s_w / 2 * (1 + var->transformx / var->transformy)));
+	var->spriteheight = abs((int)(var->s_h / (var->transformy)));
+	var->drawstarty = -var->spriteheight / 2 + var->s_h / 2 + var->vmovescreen;
+	if (var->drawstarty < 0)
+		var->drawstarty = 0;
+	var->drawendy = var->spriteheight / 2 + var->s_h / 2 + var->vmovescreen;
+	if (var->drawendy >= var->s_h)
+		var->drawendy = var->s_h - 1;
+	var->spritewidth = abs((int)(var->s_h / (var->transformy)));
+	var->drawstartx = -var->spritewidth / 2 + var->spritescreenx;
+	if (var->drawstartx < 0)
+		var->drawstartx = 0;
+	var->drawendx = var->spritewidth / 2 + var->spritescreenx;
+	if (var->drawendx >= var->s_w)
+		var->drawendx = var->s_w - 1;
 }
 
 void	draw_sprite(var_t *var, int sx, int sy)
 {
 		int x;
 		int y;
-	double vMove = 0.0;
-	double spriteX = sx - var->posX;
-	double spriteY = sy - var->posY;
+		int color;
+		int d;
 
-	double invDet = 1.0 / (var->planeX * var->dirY - var->dirX * var->planeY);
-
-	double transformX = invDet * (var->dirY * spriteX - var->dirX * spriteY);
-	double transformY = invDet * (-var->planeY * spriteX + var->planeX * spriteY);
-	int vMoveScreen = (int)(vMove / transformY);
-
-	int spriteScreenX = (int)((var->s_w / 2 * (1 + transformX / transformY)));
-
-	int spriteHeight = abs((int)(var->s_h / (transformY)));
-
-	int drawStartY = -spriteHeight / 2 + var->s_h / 2 + vMoveScreen;
-	if (drawStartY < 0)
-		drawStartY = 0;
-	int drawEndY = spriteHeight / 2 + var->s_h / 2 + vMoveScreen;
-	if (drawEndY >= var->s_h)
-		drawEndY = var->s_h - 1;
-
-	int spriteWidth = abs((int)(var->s_h / (transformY)));
-	int drawStartX = -spriteWidth / 2 + spriteScreenX;
-	if (drawStartX < 0)
-		drawStartX = 0;
-	int drawEndX = spriteWidth / 2 + spriteScreenX;
-	if (drawEndX >= var->s_w)
-		drawEndX = var->s_w - 1;
-	x = drawStartX - 1;
-	int t_bpp;
-	int t_line;
-	int t_endian;
-	while (++x < drawEndX)
+	init_sprite_var(var, sx, sy);
+	x = var->drawstartx - 1;
+	while (++x < var->drawendx)
 	{
-		if (transformY > 0 && x > 0 && x < var->s_w && transformY < var->zBuffer[x])
+		if (var->transformy > 0 && x > 0 && x < var->s_w && var->transformy < var->zBuffer[x])
 		{
-			y = drawStartY - 1;
-			int texX = (int)(256 * (x - (-spriteWidth / 2 + spriteScreenX)) * var->tex_w/ spriteWidth) / 256;
+			y = var->drawstarty - 1;
+			var->texx = (int)(256 * (x - (-var->spritewidth / 2 + var->spritescreenx)) * var->tex_w/ var->spritewidth) / 256;
 
-			while(++y < drawEndY)
+			while(++y < var->drawendy)
 			{
-				int d = (y - vMoveScreen) * 256 - var->s_h * 128 + spriteHeight * 128;
-				int texY = ((d * var->tex_h / spriteHeight) / 256);
-				int color = var->loaded_addr[6][(texX + texY * var->tex_w)];
+				d = (y - var->vmovescreen) * 256 - var->s_h * 128 + var->spriteheight * 128;
+				var->texy = ((d * var->tex_h / var->spriteheight) / 256);
+				color = var->loaded_addr[6][(var->texx + var->texy * var->tex_w)];
 				if ((color & 0x00FFFFFF) != 0) pixel_put(var, x, y, color);
 			}
 		}
@@ -1474,13 +1473,13 @@ void	initcolormap(var_t *var)
   	}
 }
 
-void	init_struct(var_t *var, sprite_t *sprite, char **argv)
+void	init_struct(var_t *var, char **argv)
 {
 	int fd;
     char *line;
-    int i = 0;
-    int y = 0;
+    int i;
 
+	i = -1;
 	inithextable(var);
 	var->posX = -1;
 	var->posY = -1;
@@ -1490,21 +1489,14 @@ void	init_struct(var_t *var, sprite_t *sprite, char **argv)
 	var->mlx_win = NULL;
 	var->mlx_ptr = NULL;
 	var->addr = NULL;
-	var->spriteVar = &sprite->x;
 	if (ft_strcmp(argv[1], "--save"))
 		var->screenshot = 1;
     fd = open(argv[var->screenshot == 1 ? 2 : 1], O_RDONLY);
     getParamFile(fd, &line, var);
 	getMapFromParamFile(var);
 	initcolormap(var);
-    i = 0;
-    while (var->paramFile[i])
-    {
-        if (var->paramFile[i] == '\n')
-            var->paramFile[i] = ' ';
-        i++;
-    }
-    i = 0;
+    while (var->paramFile[++i])
+		var->paramFile[i] == '\n' ? (var->paramFile[i] = ' ') : 0;
     var->ParamSliced = ft_split(var->paramFile, ' ');
     if (!(var->text_paths = malloc(sizeof(char *) * 9)))
         return ;
@@ -1515,14 +1507,13 @@ void	init_struct(var_t *var, sprite_t *sprite, char **argv)
 int	main(int argc, char **argv)
 {
 	var_t var;
-	sprite_t sprite;
 
 	if (!(argc >= 2 && argc <= 3))
 	{
 		ft_fprintf(1, "Please use [--save] argument to save the first frame into a bmp file\nfollowed by a .cub file or directly the .cub file to launch the game");
 		exit(0);
 	}
-	init_struct(&var, &sprite, argv);
+	init_struct(&var, argv);
 	if ((var.mlx_ptr = mlx_init()) == NULL)
 		return (EXIT_FAILURE);
 	if (var.s_w > 1914)

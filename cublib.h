@@ -17,6 +17,25 @@
 
 typedef struct var_s
 {
+
+	//sprite
+	double vmove;
+	double spritex;
+	double spritey;
+	double invdet;
+	double transformx;
+	double transformy;
+	int vmovescreen;
+	int spritescreenx;
+	int spriteheight;
+	int drawstarty;
+	int drawendy;
+	int spritewidth;
+	int drawstartx;
+	int drawendx;
+	int texx;
+	int texy;
+	//sprite
 	//var
 	double posX;
 	double posY;
@@ -107,11 +126,5 @@ typedef struct var_s
 	int o_x;
 	void *spriteVar;
 }	var_t;
-
-typedef struct sprite_s
-{
-	int x;
-	int y;
-}	sprite_t;
 
 #endif
